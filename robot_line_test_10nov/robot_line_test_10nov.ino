@@ -1,36 +1,48 @@
+/// Libraries
 #include <Adafruit_MotorShield.h>
 
-const int linereflect1 = A2; //LEFT
-const int linereflect2 = A3; //RIGHT
+// README
+// Left Line Sensor = A1
+// Right Line Sensor = A2
+// Left Motor = Port 1
+// Right Motor = Port 2
+
+/// Variable Declaration
 const int slow = 100;
 const int fast = 250;
-float linevolt1;
-float linevolt2;
+float Line_Left;
+float Line_Right;
 int robotmovement;
-float threshold = 40.0; // edit this
-// Create the motor shield object with the default I2C address
-Adafruit_MotorShield AFMS = Adafruit_MotorShield();
-Adafruit_DCMotor *Left_Motor = AFMS.getMotor(1);
-Adafruit_DCMotor *Right_Motor = AFMS.getMotor(2);
+float Line_Threshold = 40.0;
 
+/// Motor Shield Setup
+Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
+Adafruit_DCMotor *Left_Motor = AFMS.getMotor(1); // Connect Left Motor as Port 1
+Adafruit_DCMotor *Right_Motor = AFMS.getMotor(2); // And Right to Port 2
+
+/// INITIAL SETUP
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
+  // Ensure Motor Shield is connected to Arduino.
   while(!AFMS.begin()){
         Serial.println("Could not find Motor Shield. Check wiring.");
   }
-  Left_Motor->setSpeed(100);
-  Right_Motor->setSpeed(100);
+  // Set forward motor direction.
+  // TODO Affix labels to the motors to ensure port consistency, ensure "FORWARD" in code is forward on bot.
   Left_Motor->run(BACKWARD);
   Right_Motor->run(BACKWARD);
 }
-void ReadSensor(){
-  linevolt1 = analogRead(linereflect1);
-  linevolt2 = analogRead(linereflect2);
-  Serial.print("Line sensor 2 reading: ");
-  Serial.print(linevolt1); //right
-  Serial.print(" Line sensor 3 reading: ");
-  Serial.println(linevolt2); // left
+
+/// Reads Line Sensors, Outputs to Serial
+void ReadLineSensor(){
+  Line_Left = analogRead(PIN_A1);
+  Line_Right = analogRead(PIN_A2);
+  //Serial.println("L / R Line Sensors");
+  Serial.print(Line_Left);
+  Serial.print(" ");
+  Serial.print(Line_Threshold);
+  Serial.print(" ");
+  Serial.println(Line_Right);
 }
 
 void straightrobot(){
@@ -57,17 +69,17 @@ void rightrobot(){
 }
 */
 void loop() {
-  ReadSensor();
+  ReadLineSensor();
    
   //NAVIGATE
-  if(linevolt1 > threshold && linevolt2 > threshold){
+  if(Line_Left > Line_Threshold && Line_Right > Line_Threshold){
       //if(Left_Motor.speed) to avoid too many unnecessary commands
       if (robotmovement != 1){
         straightrobot();
       }
       robotmovement = 1;
   }
-  else if (linevolt1 > threshold && linevolt2 < threshold){
+  else if (Line_Left > Line_Threshold && Line_Right < Line_Threshold){
       //left change to right
       if (robotmovement != 2){
         rightrobot();
@@ -75,7 +87,7 @@ void loop() {
       robotmovement = 2;
     }
   
-  else if (linevolt1 < threshold && linevolt2 > threshold){
+  else if (Line_Left < Line_Threshold && Line_Right > Line_Threshold){
  
       // right change to left
       if (robotmovement != 2){
