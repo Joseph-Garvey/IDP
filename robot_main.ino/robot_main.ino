@@ -12,8 +12,9 @@ const int slow = 100;
 const int fast = 250;
 float Line_Left;
 float Line_Right;
-int robotmovement;
 float Line_Threshold = 40.0;
+uint8_t Left_Motor_Speed = slow;
+uint8_t Right_Motor_Speed = slow;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
@@ -43,63 +44,67 @@ void ReadLineSensor(){
   Serial.print(Line_Threshold);
   Serial.print(" ");
   Serial.println(Line_Right);
+  Serial.println("L/R Sensor Output")
 }
 
-void straightrobot(){
-  Serial.print("STRAIGHT");
-  Left_Motor->setSpeed(fast);
-  Right_Motor->setSpeed(fast);
+// ENCAPSULATE MOTOR IN CLASS TO REDUCE CODE
+
+void Move_Straight(){
+  //Serial.print("STRAIGHT");
+  if(Left_Motor_Speed != fast) { 
+    Left_Motor->setSpeed(fast); 
+    Left_Motor_Speed = fast;
+  }
+  if(Right_Motor_Speed != fast){
+    Right_Motor->setSpeed(fast); 
+    Right_Motor_Speed = fast;
+  }
 }
 
-void leftrobot(){
-  Serial.print("LEFT");
-  Left_Motor->setSpeed(slow);
-  Right_Motor->setSpeed(fast);
+void Move_Left(){
+  //Serial.print("LEFT");
+  if(Left_Motor_Speed != slow) { 
+    Left_Motor->setSpeed(slow); 
+    Left_Motor_Speed = slow;
+  }
+  if(Right_Motor_Speed != fast){
+    Right_Motor->setSpeed(fast); 
+    Right_Motor_Speed = fast;
+  }
 }
 
-void rightrobot(){
-  Serial.print("RIGHT");
-  Left_Motor->setSpeed(fast);
-  Right_Motor->setSpeed(slow);
+void Move_Right(){
+  //Serial.print("RIGHT");
+  if(Left_Motor_Speed != fast) { 
+    Left_Motor->setSpeed(fast); 
+    Left_Motor_Speed = fast;
+  }
+  if(Right_Motor_Speed != slow){
+    Right_Motor->setSpeed(slow); 
+    Right_Motor_Speed = slow;
+  }
 }
 
-/*void lostrobot(){
-  Left_Motor->run(FORWARD);
-  Serial.print("Lost");
+void Move_Lost(){
+  // if(Left_Motor_Speed == fast && Right_Motor_Speed == slow){
+
+  // }
+  // else if(){
+
+  // }
+  // else {
+  //   // what happened??
+  // }
 }
-*/
+
 void loop() {
   ReadLineSensor();
-   
-  //NAVIGATE
-  if(Line_Left > Line_Threshold && Line_Right > Line_Threshold){
-      //if(Left_Motor.speed) to avoid too many unnecessary commands
-      if (robotmovement != 1){
-        straightrobot();
-      }
-      robotmovement = 1;
-  }
-  else if (Line_Left > Line_Threshold && Line_Right < Line_Threshold){
-      //left change to right
-      if (robotmovement != 2){
-        rightrobot();
-      }
-      robotmovement = 2;
-    }
-  
-  else if (Line_Left < Line_Threshold && Line_Right > Line_Threshold){
- 
-      // right change to left
-      if (robotmovement != 2){
-        rightrobot();
-      }
-      robotmovement = 2;
-    }
-//    else{
-//      Serial.print("Lost");
-//      //this is lost
-//      //Left_Motor->run(FORWARD);
-//    }
-//  }
-  
+  if(Line_Left > Line_Threshold && Line_Right > Line_Threshold) { Move_Straight(); }
+  else if (Line_Left > Line_Threshold && Line_Right < Line_Threshold){ Move_Left(); }
+  else if (Line_Left < Line_Threshold && Line_Right > Line_Threshold){ Move_Right(); }
+  else { Move_Lost(); }
+  // TODO test if setting motor speed here or in the function is faster? Use of two variable versus one
+  if(Left_Motor_Speed )
+  Left_Motor -> setSpeed(Left_Motor_Speed);
+  Right_Motor -> setSpeed(Right_Motor_Speed);
 }
