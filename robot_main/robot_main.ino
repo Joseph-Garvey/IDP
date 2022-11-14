@@ -8,11 +8,11 @@
 // Right Motor = Port 2
 
 /// Variable Declaration
-const int slow = 100;
+const int slow = 50;
 const int fast = 250;
 float Line_Left;
 float Line_Right;
-float Line_Threshold = 40.0;
+float Line_Threshold = 20.0;
 uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
 
@@ -36,15 +36,15 @@ void setup() {
 
 /// Reads Line Sensors, Outputs to Serial
 void ReadLineSensor(){
-  Line_Left = analogRead(PIN_A1);
-  Line_Right = analogRead(PIN_A2);
+  Line_Left = analogRead(A1);
+  Line_Right = analogRead(A2);
   //Serial.println("L / R Line Sensors");
   Serial.print(Line_Left);
   Serial.print(" ");
   Serial.print(Line_Threshold);
   Serial.print(" ");
   Serial.println(Line_Right);
-  Serial.println("L/R Sensor Output")
+  //Serial.println("L/R Sensor Output");
 }
 
 // ENCAPSULATE MOTOR IN CLASS TO REDUCE CODE
@@ -104,7 +104,7 @@ void loop() {
   else if (Line_Left < Line_Threshold && Line_Right > Line_Threshold){ Move_Right(); }
   else { Move_Lost(); }
   // TODO test if setting motor speed here or in the function is faster? Use of two variable versus one
-  if(Left_Motor_Speed )
+  //if(Left_Motor_Speed )
   Left_Motor -> setSpeed(Left_Motor_Speed);
   Right_Motor -> setSpeed(Right_Motor_Speed);
 }
