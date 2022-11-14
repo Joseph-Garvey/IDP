@@ -4,8 +4,8 @@ const int linereflect1 = A2; //LEFT
 const int linereflect2 = A3; //RIGHT
 const int slow = 100;
 const int fast = 150;
-float linevolt1;
-float linevolt2;
+float Line_Left;
+float Line_Right;
 float threshold = 80.0; // edit this
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
