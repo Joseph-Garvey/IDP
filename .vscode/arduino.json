@@ -1,0 +1,7 @@
+{
+    "configuration": "mode=on",
+    "board": "arduino:megaavr:uno2018",
+    "port": "COM7",
+    "sketch": "robot_linetest\\robot_linetest.ino",
+    "programmer": "arduino:medbg"
+}
