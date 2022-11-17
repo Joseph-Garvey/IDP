@@ -32,6 +32,7 @@ int IR_Threshold = 350;
 uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
 int cycles_deviated = 0;
+//const int LDR_Threshold = 10;
 //int intersections = 0;
 //const int distance_to_wall
 int cycles_max = 5000;
@@ -150,8 +151,20 @@ void Move_Lost()
 
 bool ReadLDR()
 {
-//bool LDR = digitalread(LDR_Sensor)
-//return LDR
+//Analog read
+/*LDR_Reading = analogRead(LDR_Sensor)
+if (LDR_Reading > LDR_Threshold)
+{
+  bool LDR = false;
+}
+else
+{
+  bool LDR = true;
+}
+return LDR*/
+
+//Digital read
+//bool LDR = digitalRead(LDR_Sensor)
 }
 
 void ReadSideUS()
@@ -185,7 +198,10 @@ void TunnelRoutine()
     else
     {
       Move_Straight();
-    }*/
+    }
+    Left_Motor->setSpeed(Left_Motor_Speed);
+    Right_Motor->setSpeed(Right_Motor_Speed);
+    */
 }
 
 void loop()
