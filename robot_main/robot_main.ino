@@ -15,8 +15,9 @@
 // Front Proximity = 13
 
 /// Variable Declaration
-const int slow = 50;
-const int fast = 150;
+const int max_speed_delta = 80;
+int slow;
+const int fast = 255;
 float Line_Left;
 float Line_Right;
 int Line_Threshold = 60;
@@ -25,6 +26,7 @@ int IR_Threshold = 350;
 uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
 int cycles_deviated = 0;
+int cycles_max = 5000;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
@@ -55,9 +57,13 @@ void ReadLineSensor(){
   Serial.print(" ");
   Serial.print(Line_Threshold);
   Serial.print(" ");
-  ///
-  IR_Front = analogRead(IRPin);
-  Serial.print(IR_Front);
+  /// this should be somewhere else
+  // IR_Front = analogRead(IRPin);
+  // Serial.print(IR_Front);
+  // Serial.print(" ");
+  Serial.print(cycles_deviated);
+  Serial.print(" ");
+  Serial.print(slow);
   Serial.print(" ");
   ///
   Serial.println(Line_Right);
@@ -103,7 +109,13 @@ void Move_Right(){
   }
 }
 
+void Calc_Turning_Rate(){
+  cycles_deviated += 1;
+  slow = 150;
+  //slow = fast - (max_speed_delta*cycles_deviated/cycles_max);
+}
 void Move_Lost(){
+  cycles_deviated = cycles_max;
   // if(Left_Motor_Speed == fast && Right_Motor_Speed == slow){
 
   // }
