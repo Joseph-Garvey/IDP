@@ -21,7 +21,7 @@
 // LDR_Sensor =
 
 /// Variable Declaration
-const int max_speed_delta = 80;
+const int max_speed_delta = 150;
 int slow;
 const int fast = 255;
 float Line_Left;
@@ -35,12 +35,12 @@ int cycles_deviated = 0;
 //const int LDR_Threshold = 10;
 //int intersections = 0;
 //const int distance_to_wall
-int cycles_max = 5000;
+int cycles_max = 3000;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
-Adafruit_DCMotor *Left_Motor = AFMS.getMotor(1);    // Connect Left Motor as Port 1
-Adafruit_DCMotor *Right_Motor = AFMS.getMotor(2);   // And Right to Port 2
+Adafruit_DCMotor *Left_Motor = AFMS.getMotor(3);    // Connect Left Motor as Port 1
+Adafruit_DCMotor *Right_Motor = AFMS.getMotor(4);   // And Right to Port 2
 
 /// INITIAL SETUP
 void setup()
@@ -49,7 +49,7 @@ void setup()
   pinMode(IRPin, INPUT);
   pinMode(Proximity_Front_LED, OUTPUT);
   // Ensure Motor Shield is connected to Arduino.
-  while (!AFMS.begin())
+  while (!AFMS.begin()) 
   {
     Serial.println("Could not find Motor Shield. Check wiring.");
   }
@@ -102,6 +102,7 @@ void Move_Straight()
 
 void Move_Left()
 {
+  Calc_Turning_Rate();
   // Serial.print("LEFT");
   if (Left_Motor_Speed != slow)
   {
@@ -117,6 +118,7 @@ void Move_Left()
 
 void Move_Right()
 {
+  Calc_Turning_Rate();
   // Serial.print("RIGHT");
   if (Left_Motor_Speed != fast)
   {
@@ -132,9 +134,10 @@ void Move_Right()
 
 void Calc_Turning_Rate(){
   cycles_deviated += 1;
-  slow = 150;
-  //slow = fast - (max_speed_delta*cycles_deviated/cycles_max);
+  //slow = 150;
+  slow = fast - (max_speed_delta*cycles_deviated/cycles_max);
 }
+
 void Move_Lost()
 {
   cycles_deviated = cycles_max;
