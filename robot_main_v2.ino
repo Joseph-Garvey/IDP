@@ -165,7 +165,8 @@ void CountJunctions()
     ReadJLineSensor();
     if (J_Line_Right && J_Line_Left)
     {
-        doubleintersection += 1 delay(1000);
+        doubleintersection += 1
+        delay(1000);
     }
     else if (J_Line_Right || J_Line_Left && clockwise)
     {
