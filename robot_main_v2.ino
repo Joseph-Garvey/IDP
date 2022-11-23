@@ -93,14 +93,12 @@ void Test_Connections(){
         }
     }
     // line following sensors
-=======
         String command = Serial.readStringUntil('\n');
         if (command == "y"){
             motors_connected = true;
         }
     }
     // line following sensors
->>>>>>> 3c07d06f4a38ebd948b762d7c30d4bcfa3c33eb4
     // Then test grabber
     bool grabbers_calibrated = false;
     while (!grabbers_calibrated)
