@@ -3,34 +3,25 @@
 #include <Servo.h>
 // README
 // Pin Definitions
-#define IR_Front A0 // which sensor is this and does it matter?
-#define Line_Left_Sensor A1
-#define Line_Right_Sensor A2
-#define Proximity_Front_LED 8
-#define Servo1 9
-// #define currentservopin
-// #define J_Line_Left_Sensor
-// #define J_Line_Right_Sensor
-// #define Side_IR_Sensor
-// #define Front_IR_Sensor
-// #define LDR_Sensor
-// README
-// Left Line Sensor = A1
-// Right Line Sensor = A2
-// IR Front Sensor = A3
-// Left Motor = Port 3
-// Right Motor = Port 4
-// Front Proximity = 13
-// Side_IR_Sensor =
-// Tunnel_LDR_Sensor =
-// Grabber_LDR_Sensor =
+#define IR_Front A0 // Pin for block sensor on front (Analog).
+#define Line_Left_Sensor A1 // Pin for Left Line Sensor (Analog).
+#define Line_Right_Sensor A2 // Pin for Right Sensor (Analog).
+#define IR_Left A3 // Pin for block sensor on Left side (Analog).
+#define LDR_Tunnel 2 // Pin for detecting if the robot is entering the tunnel.
+#define LED_HighDensity 6 // RED LED.
+#define LED_Moving 7 // Flashing LED.
+#define LDR_Grabber 8 // Sensor for block detection.
+#define Grabber 9 // Pin for Grabber Servo
+#define LED_LowDensity 11 // GREEN LED.
+#define Junction_Left_Sensor 12 // Pin for Junction on Left (Digital).
+#define Junction_Right_Sensor 13 // Pin for Junction on Right (Digital).
 
 /// Variable Declaration
+float Line_Left_Reading;
+float Line_Right_Reading;
 const int max_speed_delta = 150;
 int slow;
 const int fast = 255;
-float Line_Left;
-float Line_Right;
 bool J_Line_Left;
 bool J_Line_Right;
 int Line_Threshold = 60;
@@ -52,8 +43,6 @@ bool JunctionDetected = false;
 bool FrontBlockDetected = false;
 bool SideBlockDetected = false;
 
-int servoPin 3
-
 Servo Servo1;
 
 /// Motor Shield Setup
@@ -66,8 +55,10 @@ void setup()
 {
     Serial.begin(9600);
     // Enable Pins
-    pinMode(IRPin, INPUT);
+    pinMode(Front_IR_Sensor, INPUT);
     pinMode(Proximity_Front_LED, OUTPUT);
+    pinMode(Side_IR_Sensor, INPUT);
+    pinMode(block_sensor, INPUT_PULLUP);
     pinMode(currentservoPin, INPUT);
     // We need to attach the servo to the used pin number 
     Servo1.attach(servoPin); 
@@ -98,7 +89,7 @@ void Test_Connections(){
 void ReadLineSensor()
 {
     Line_Left = analogRead(Line_Left_Sensor);
-    Line_Right = analogRead(Line_Right_Sensor);
+    Line_Right = analogRead(Line_Right_Pin);
     // Serial.println("L / R Line Sensors");
     Serial.print(Line_Left);
     Serial.print(" ");
@@ -152,7 +143,7 @@ void ReadSideIR()
 void ReadJLineSensor()
 {
     J_Line_Right = digitalRead(J_Line_Right_Sensor)
-    J_Line_Left = digitalRead(J_Line_Left_Sensor)
+    J_Line_Left = digitalRead(Junction_Left_Sensor)
 }
 
 void CountJunctions()
@@ -160,7 +151,8 @@ void CountJunctions()
     ReadJLineSensor();
     if (J_Line_Right && J_Line_Left)
     {
-        doubleintersection += 1 delay(1000);
+        doubleintersection += 1
+        delay(1000);
     }
     else if (J_Line_Right || J_Line_Left && clockwise)
     {
