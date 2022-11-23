@@ -39,8 +39,8 @@ int cycles_max = 3000;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
-Adafruit_DCMotor *Left_Motor = AFMS.getMotor(3);    // Connect Left Motor as Port 1
-Adafruit_DCMotor *Right_Motor = AFMS.getMotor(4);   // And Right to Port 2
+Adafruit_DCMotor *Left_Motor = AFMS.getMotor(1);    // Connect Left Motor as Port 1
+Adafruit_DCMotor *Right_Motor = AFMS.getMotor(2);   // And Right to Port 2
 
 /// INITIAL SETUP
 void setup()
