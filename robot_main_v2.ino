@@ -3,10 +3,11 @@
 #include <Servo.h>
 // README
 // Pin Definitions
-#define IRPin A0
+#define IR_Front A0 // which sensor is this and does it matter?
 #define Line_Left_Sensor A1
 #define Line_Right_Sensor A2
 #define Proximity_Front_LED 8
+#define Servo1 9
 // #define currentservopin
 // #define J_Line_Left_Sensor
 // #define J_Line_Right_Sensor
@@ -70,12 +71,6 @@ void setup()
     pinMode(currentservoPin, INPUT);
     // We need to attach the servo to the used pin number 
     Servo1.attach(servoPin); 
-    // Ensure Motor Shield is connected to Arduino.
-    while (!AFMS.begin()) { Serial.println("Could not find Motor Shield. Check wiring."); }
-    // Sanity Checks for initial testing (Find a way to disable these for restarts)
-    Serial.println("Motor Shield Connected. Checking Motor Connections.");
-    Serial.println(("Right Motor spinning forward. Check connection and type 'y' to proceed."));
-    if (Serial.read("y"))
     // Set forward motor direction.
     Left_Motor->run(BACKWARD);
     Right_Motor->run(BACKWARD);
@@ -89,10 +84,12 @@ void Test_Connections(){
     bool motors_connected = false;
     while(!motors_connected){
         Serial.println(("Right Motor spinning forward, Left spinning backward. Check connections and type 'y' to proceed."));
-        if (Serial.read('y')){
+        String command = Serial.readStringUntil('\n');
+        if (command == "y"){
             motors_connected = true;
         }
     }
+    // line following sensors
     // Then test grabber
     // test optical sensor
 }
