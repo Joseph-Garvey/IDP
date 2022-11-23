@@ -86,17 +86,58 @@ void setup()
 /// Test Suites
 void Test_Connections(){
     // Ensure Motor Shield is connected to Arduino.
-    while (!AFMS.begin()) { Serial.println("Could not find Motor Shield. Check wiring."); }
+    while (!AFMS.begin())
+    {
+        Serial.println("Could not find Motor Shield. Check wiring.");
+    }
     Serial.println("Motor Shield Connected. Checking Motor Connections.");
     bool motors_connected = false;
-    while(!motors_connected){
+    Motor_Left->run(BACKWARD);
+    Motor_Right->run(FORWARD);
+    Motor_Left->setSpeed(fast);
+    Motor_Left->setSpeed(fast);
+    while(!motors_connected)
+    {
         Serial.println(("Right Motor spinning forward, Left spinning backward. Check connections and type 'y' to proceed."));
-        if (Serial.read('y')){
+        if (Serial.read('y'))
+        {
             motors_connected = true;
         }
     }
+    Motor_Left->setSpeed(0);
+    Motor_Right->setSpeed(0);
     // Then test grabber
+    bool grabbers_calibrated = false;
+    while (!grabbers_calibrated)
+    {
+        Servo1.write(40);
+        Serial.println(("Grabber is open. Check and type 'y' to proceed."));
+        if (Serial.read('y'))
+        {
+            Servo.write(85);
+            Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
+            {
+                if (Serial.read('y'))
+                {
+                    grabbers_calibrated = true;
+                }
+            }
+        }
+    }
     // test optical sensor
+    bool optics_functioning = false;
+    while (!optics_functioning)
+    {
+    block_type = digitalRead(LDR_Grabber);
+    if (block_type == HIGH)
+    {
+        Serial.println("LOW DENSITY");
+    }
+    else
+    {
+        Serial.println("HIGH DENSITY");
+    }
+    }
 }
 
 /// Reads Line Sensors, Outputs to Serial
