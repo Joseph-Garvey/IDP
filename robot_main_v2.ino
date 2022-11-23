@@ -1,11 +1,13 @@
 /// Libraries
 #include <Adafruit_MotorShield.h>
+#include <Servo.h>
 // README
 // Pin Definitions
 #define IRPin A0
 #define Line_Left_Sensor A1
 #define Line_Right_Sensor A2
 #define Proximity_Front_LED 8
+// #define currentservopin
 // #define J_Line_Left_Sensor
 // #define J_Line_Right_Sensor
 // #define Side_IR_Sensor
@@ -49,6 +51,10 @@ bool JunctionDetected = false;
 bool FrontBlockDetected = false;
 bool SideBlockDetected = false;
 
+int servoPin 3
+
+Servo Servo1;
+
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
 Adafruit_DCMotor *Left_Motor = AFMS.getMotor(3);    // Connect Left Motor as Port 1
@@ -61,6 +67,9 @@ void setup()
     // Enable Pins
     pinMode(IRPin, INPUT);
     pinMode(Proximity_Front_LED, OUTPUT);
+    pinMode(currentservoPin, INPUT);
+    // We need to attach the servo to the used pin number 
+    Servo1.attach(servoPin); 
     // Ensure Motor Shield is connected to Arduino.
     while (!AFMS.begin()) { Serial.println("Could not find Motor Shield. Check wiring."); }
     // Sanity Checks for initial testing (Find a way to disable these for restarts)
@@ -335,7 +344,7 @@ void GrabRoutine(){
         Move_Straight();
     }
     Move_Stop();
-    // grab
+    Servo1.write(85) // close
     grabbed = true
     ReadJLineSensor();
     while (J_Line_Left != true && J_Line_Right != true)
@@ -356,7 +365,7 @@ void DropRoutine()
         Move_Straight();
     }
     Move_Stop();
-    // drop
+    Servo1.write(40) // open
     grabbed = false
     Move_Backwards;
     delay(500);
@@ -469,6 +478,7 @@ void loop()
         TunnelRoutine();
     }
     CountJunctions(); // Count single intersections and double intersections
+    ReadSideIR();
     if (doubleintersection == 0)
     {
         // Initial Movement
@@ -487,23 +497,41 @@ void loop()
         JunctionRoutine();
         DropRoutine();
     }
-    if (not grabbed && JunctionDetected && intersection > 1 && < 4)
+    if (not grabbed && JunctionDetected && intersection == 2)
     {
-        ReadSideIR();
         ReadFrontIR();
-        if (FrontBlockDetected && SideBlockDetected)
+        if (FrontBlockDetected)
         {
             //forward grab routine
             while (Front_IR_Reading > 2)
+            {
+                ReadFrontIR();
+                Move_Straight();
+                Move_Stop();
+                Servo1.write(85) // grab
+                grabbed = true
+            }
+        }
+    }
+    if (not grabbed && SideBlockDetected)
+    {
+        if (intersection == 2)
         {
             ReadFrontIR();
-            Move_Straight();
-            Move_Stop();
-            // grab
-            grabbed = true
+            if (FrontBlockDetected)
+            {
+                //forward grab routine
+                while (Front_IR_Reading > 2)
+                {
+                    ReadFrontIR();
+                    Move_Straight();
+                    Move_Stop();
+                    Servo1.write(85) // grab
+                    grabbed = true
+                }
+            }
         }
-        }
-        else if (SideBlockDetected)
+        else if (intersection == 3)
         {
             //side grab routine
             Move_Stop();

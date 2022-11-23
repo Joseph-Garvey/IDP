@@ -1,5 +1,5 @@
-const int linereflect2 = A2;
-const int linereflect3 = A3;
+const int linereflect2 = A1;
+const int linereflect3 = A2;
 float Line_Right;
 float linevolt3;
 void setup() {
