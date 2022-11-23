@@ -41,7 +41,7 @@ int cycles_deviated = 0;
 // const int LDR_Threshold = 10;
 int intersection = 0;
 int doubleintersection = 0;
-const int distance_to_wall = 3
+const int distance_to_wall = 3;
 int cycles_max = 3000;
 bool clockwise = true;
 int Desired_Intersection = 500;
@@ -65,6 +65,8 @@ void setup()
 {
     Serial.begin(9600);
     pinMode(Front_IR_Sensor, INPUT);
+    // Enable Pins
+    pinMode(IRPin, INPUT);
     pinMode(Proximity_Front_LED, OUTPUT);
     pinMode(Side_IR_Sensor, INPUT);
     pinMode(block_sensor, INPUT_PULLUP);
@@ -72,14 +74,30 @@ void setup()
     // We need to attach the servo to the used pin number 
     Servo1.attach(servoPin); 
     // Ensure Motor Shield is connected to Arduino.
-    while (!AFMS.begin())
-    {
-        Serial.println("Could not find Motor Shield. Check wiring.");
-    }
+    while (!AFMS.begin()) { Serial.println("Could not find Motor Shield. Check wiring."); }
+    // Sanity Checks for initial testing (Find a way to disable these for restarts)
+    Serial.println("Motor Shield Connected. Checking Motor Connections.");
+    Serial.println(("Right Motor spinning forward. Check connection and type 'y' to proceed."));
+    if (Serial.read("y"))
     // Set forward motor direction.
-    // TODO Affix labels to the motors to ensure port consistency, ensure "FORWARD" in code is forward on bot.
     Left_Motor->run(BACKWARD);
     Right_Motor->run(BACKWARD);
+}
+
+/// Test Suites
+void Test_Connections(){
+    // Ensure Motor Shield is connected to Arduino.
+    while (!AFMS.begin()) { Serial.println("Could not find Motor Shield. Check wiring."); }
+    Serial.println("Motor Shield Connected. Checking Motor Connections.");
+    bool motors_connected = false;
+    while(!motors_connected){
+        Serial.println(("Right Motor spinning forward, Left spinning backward. Check connections and type 'y' to proceed."));
+        if (Serial.read('y')){
+            motors_connected = true;
+        }
+    }
+    // Then test grabber
+    // test optical sensor
 }
 
 /// Reads Line Sensors, Outputs to Serial
@@ -320,8 +338,7 @@ void DetectDensityRoutine()
     }
 }
 
-void GrabRoutine()
-{
+void GrabRoutine(){
     // To change: Move forwards until front IR sensor reads near 0, Move backwards until J line sensors read junction
     ReadFrontIR();
     while (Front_IR_Reading > 2)
@@ -339,6 +356,7 @@ void GrabRoutine()
         Move_Backwards();
     }
     Move_Stop();
+}
 
 void DropRoutine()
 {
