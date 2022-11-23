@@ -64,9 +64,8 @@ Adafruit_DCMotor *Right_Motor = AFMS.getMotor(4);   // And Right to Port 2
 void setup()
 {
     Serial.begin(9600);
-    pinMode(Front_IR_Sensor, INPUT);
     // Enable Pins
-    pinMode(IRPin, INPUT);
+    pinMode(Front_IR_Sensor, INPUT);
     pinMode(Proximity_Front_LED, OUTPUT);
     pinMode(Side_IR_Sensor, INPUT);
     pinMode(block_sensor, INPUT_PULLUP);
