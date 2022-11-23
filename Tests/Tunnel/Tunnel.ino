@@ -27,8 +27,8 @@
 /// Variable Declaration
 // Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
-Adafruit_DCMotor *Left_Motor = AFMS.getMotor(1);    // Connect Left Motor as Port 1
-Adafruit_DCMotor *Right_Motor = AFMS.getMotor(2);   // And Right to Port 2
+Adafruit_DCMotor *Motor_Left = AFMS.getMotor(1);    // Connect Left Motor as Port 1
+Adafruit_DCMotor *Motor_Right = AFMS.getMotor(2);   // And Right to Port 2
 const int max_speed_delta = 150;
 int slow;
 const int fast = 255;
@@ -55,8 +55,8 @@ void setup()
   }
   // Set forward motor direction.
   // TODO Affix labels to the motors to ensure port consistency, ensure "FORWARD" in code is forward on bot.
-  Left_Motor->run(BACKWARD);
-  Right_Motor->run(BACKWARD);
+  Motor_Left->run(BACKWARD);
+  Motor_Right->run(BACKWARD);
 }
 
 /// Reads Line Sensors, Outputs to Serial
@@ -73,12 +73,12 @@ void Move_Straight()
   cycles_deviated = 0;
   if (Left_Motor_Speed != fast)
   {
-    Left_Motor->setSpeed(fast);
+    Motor_Left->setSpeed(fast);
     Left_Motor_Speed = fast;
   }
   if (Right_Motor_Speed != fast)
   {
-    Right_Motor->setSpeed(fast);
+    Motor_Right->setSpeed(fast);
     Right_Motor_Speed = fast;
   }
 }
@@ -89,12 +89,12 @@ void Move_Left()
   // Serial.print("LEFT");
   if (Left_Motor_Speed != slow)
   {
-    Left_Motor->setSpeed(slow);
+    Motor_Left->setSpeed(slow);
     Left_Motor_Speed = slow;
   }
   if (Right_Motor_Speed != fast)
   {
-    Right_Motor->setSpeed(fast);
+    Motor_Right->setSpeed(fast);
     Right_Motor_Speed = fast;
   }
 }
@@ -105,12 +105,12 @@ void Move_Right()
   // Serial.print("RIGHT");
   if (Left_Motor_Speed != fast)
   {
-    Left_Motor->setSpeed(fast);
+    Motor_Left->setSpeed(fast);
     Left_Motor_Speed = fast;
   }
   if (Right_Motor_Speed != slow)
   {
-    Right_Motor->setSpeed(slow);
+    Motor_Right->setSpeed(slow);
     Right_Motor_Speed = slow;
   }
 }
@@ -174,8 +174,8 @@ void loop()
   }
   else{ digitalWrite(LED_Tunnel, LOW); }
   // TODO test if setting motor speed here or in the function is faster? Use of two variable versus one
-  Left_Motor->setSpeed(Left_Motor_Speed);
-  Right_Motor->setSpeed(Right_Motor_Speed);
+  Motor_Left->setSpeed(Left_Motor_Speed);
+  Motor_Right->setSpeed(Right_Motor_Speed);
 }
 
 

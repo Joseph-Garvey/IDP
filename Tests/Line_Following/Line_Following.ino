@@ -9,8 +9,8 @@ float Line_Right;
 float threshold = 80.0; // edit this
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
-Adafruit_DCMotor *Left_Motor = AFMS.getMotor(1);
-Adafruit_DCMotor *Right_Motor = AFMS.getMotor(2);
+Adafruit_DCMotor *Motor_Left = AFMS.getMotor(1);
+Adafruit_DCMotor *Motor_Right = AFMS.getMotor(2);
 
 void setup() {
   // put your setup code here, to run once:
@@ -18,10 +18,10 @@ void setup() {
   while(!AFMS.begin()){
         Serial.println("Could not find Motor Shield. Check wiring.");
   }
-  Left_Motor->setSpeed(100);
-  Right_Motor->setSpeed(100);
-  Left_Motor->run(BACKWARD);
-  Right_Motor->run(BACKWARD);
+  Motor_Left->setSpeed(100);
+  Motor_Right->setSpeed(100);
+  Motor_Left->run(BACKWARD);
+  Motor_Right->run(BACKWARD);
 }
 
 void loop() {
@@ -39,13 +39,13 @@ void loop() {
       Serial.print("STRAIGHT");
       //if(Left_Motor.speed) to avoid too many unnecessary commands
       Left_Motor->setSpeed(fast);
-      Right_Motor->setSpeed(fast);
+      Motor_Right->setSpeed(fast);
     }
     else{
       //left
       Serial.print("LEFT");
       Left_Motor->setSpeed(slow);
-      Right_Motor->setSpeed(fast);
+      Motor_Right->setSpeed(fast);
     }
   }
   else{
@@ -53,7 +53,7 @@ void loop() {
       // right
       Serial.print("right");
       Left_Motor->setSpeed(fast);
-      Right_Motor->setSpeed(slow);
+      Motor_Right->setSpeed(slow);
     }
     else{
       Serial.print("Lost");
