@@ -54,8 +54,8 @@ Servo Servo1;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
-Adafruit_DCMotor *Left_Motor = AFMS.getMotor(3);    // Connect Left Motor as Port 1
-Adafruit_DCMotor *Right_Motor = AFMS.getMotor(4);   // And Right to Port 2
+Adafruit_DCMotor *Motor_Left = AFMS.getMotor(3);    // Connect Left Motor as Port 1
+Adafruit_DCMotor *Motor_Right = AFMS.getMotor(4);   // And Right to Port 2
 
 /// INITIAL SETUP
 void setup()
@@ -66,8 +66,9 @@ void setup()
     // We need to attach the servo to the used pin number 
     Servo1.attach(Grabber); 
     // Set forward motor direction.
-    Left_Motor->run(BACKWARD);
-    Right_Motor->run(BACKWARD);
+    Motor_Left->run(FORWARD);
+    Motor_Right->run(FORWARD);
+    Test_Connections();
 }
 
 /// Test Suites
@@ -86,31 +87,21 @@ void Test_Connections(){
     while(!motors_connected)
     {
         Serial.println(("Right Motor spinning forward, Left spinning backward. Check connections and type 'y' to proceed."));
-<<<<<<< HEAD
-        if (Serial.read('y'))
-        {
-            motors_connected = true;
-        }
-    }
-    Motor_Left->setSpeed(0);
-    Motor_Right->setSpeed(0);
-=======
         String command = Serial.readStringUntil('\n');
         if (command == "y"){
             motors_connected = true;
         }
     }
     // line following sensors
->>>>>>> 3c07d06f4a38ebd948b762d7c30d4bcfa3c33eb4
     // Then test grabber
     bool grabbers_calibrated = false;
     while (!grabbers_calibrated)
     {
         Servo1.write(40);
         Serial.println(("Grabber is open. Check and type 'y' to proceed."));
-        if (Serial.read('y'))
+        if (Serial.read() == 'y')
         {
-            Servo.write(85);
+            Servo1.write(85);
             Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
             {
                 if (Serial.read('y'))
@@ -134,7 +125,6 @@ void Test_Connections(){
         Serial.println("HIGH DENSITY");
     }
     }
-}
 
 /// Reads Line Sensors, Outputs to Serial
 void ReadLineSensor()
@@ -227,78 +217,78 @@ void CountJunctions()
 
 void Move_Stop()
 {
-    Left_Motor->setSpeed(0);
-    Right_Motor->setSpeed(0);
+    Motor_Left->setSpeed(0);
+    Motor_Right->setSpeed(0);
 }
 
 void Move_Straight()
 {
-    Left_Motor->run(FORWARD);
-    Right_Motor->run(FORWARD);
+    Motor_Left->run(FORWARD);
+    Motor_Right->run(FORWARD);
         // Serial.print("STRAIGHT");
         cycles_deviated = 0;
     if (Left_Motor_Speed != fast)
     {
-        Left_Motor->setSpeed(fast);
+        Motor_Left->setSpeed(fast);
         Left_Motor_Speed = fast;
     }
     if (Right_Motor_Speed != fast)
     {
-        Right_Motor->setSpeed(fast);
+        Motor_Right->setSpeed(fast);
         Right_Motor_Speed = fast;
     }
 }
 
 void Move_Backwards()
 {
-    Left_Motor->run(BACKWARD);
-    Right_Motor->run(BACKWARD);
+    Motor_Left->run(BACKWARD);
+    Motor_Right->run(BACKWARD);
     Serial.print("STRAIGHT");
     cycles_deviated = 0;
     if (Left_Motor_Speed != fast)
     {
-        Left_Motor->setSpeed(fast);
+        Motor_Left->setSpeed(fast);
         Left_Motor_Speed = fast;
     }
     if (Right_Motor_Speed != fast)
     {
-        Right_Motor->setSpeed(fast);
+        Motor_Right->setSpeed(fast);
         Right_Motor_Speed = fast;
     }
 }
 
 void Move_Left()
 {
-    Left_Motor->run(FORWARD);
-    Right_Motor->run(FORWARD);
+    Motor_Left->run(FORWARD);
+    Motor_Right->run(FORWARD);
     Calc_Turning_Rate();
     // Serial.print("LEFT");
     if (Left_Motor_Speed != slow)
     {
-        Left_Motor->setSpeed(slow);
+        Motor_Left->setSpeed(slow);
         Left_Motor_Speed = slow;
     }
     if (Right_Motor_Speed != fast)
     {
-        Right_Motor->setSpeed(fast);
+        Motor_Right->setSpeed(fast);
         Right_Motor_Speed = fast;
     }
 }
 
 void Move_Right()
 {
-    Left_Motor->run(FORWARD);
-    Right_Motor->run(FORWARD);
+    Motor_Left->run(FORWARD);
+    Motor_Right->run(FORWARD);
     Calc_Turning_Rate();
     // Serial.print("RIGHT");
     if (Left_Motor_Speed != fast)
     {
-        Left_Motor->setSpeed(fast);
+        Motor_Left->setSpeed(fast);
         Left_Motor_Speed = fast;
     }
     if (Right_Motor_Speed != slow)
     {
-        Right_Motor->setSpeed(slow);
+        Motor_Right->setSpeed(slow);
         Right_Motor_Speed = slow;
     }
 }
@@ -315,49 +305,49 @@ void Move_Lost()
     slow = 0;
     if (Left_Motor_Speed == fast && Right_Motor_Speed == slow)
     {
-        Right_Motor->setSpeed(slow);
+        Motor_Right->setSpeed(slow);
         Right_Motor_Speed = slow;
     }
     else if (Left_Motor_Speed == slow && Right_Motor_Speed == fast)
     {
-        Left_Motor->setSpeed(slow);
+        Motor_Left->setSpeed(slow);
         Left_Motor_Speed = slow;
     }
     else
     {
-        Left_Motor->run(BACKWARD);
-        Right_Motor->run(BACKWARD);
+        Motor_Left->run(BACKWARD);
+        Motor_Right->run(BACKWARD);
     }
 }
 
 void Move_ACW()
 {
-    Left_Motor->run(BACKWARD);
-    Right_Motor->run(FORWARD);
+    Motor_Left->run(BACKWARD);
+    Motor_Right->run(FORWARD);
     if (Left_Motor_Speed != fast)
     {
-        Left_Motor->setSpeed(fast);
+        Motor_Left->setSpeed(fast);
         Left_Motor_Speed = fast;
     }
     if (Right_Motor_Speed != fast)
     {
-        Right_Motor->setSpeed(fast);
+        Motor_Right->setSpeed(fast);
         Right_Motor_Speed = fast;
     }
 }
 
 void Move_CW()
 {
-    Left_Motor->run(FORWARD);
-    Right_Motor->run(BACKWARD);
+    Motor_Left->run(FORWARD);
+    Motor_Right->run(BACKWARD);
     if (Left_Motor_Speed != fast)
     {
-        Left_Motor->setSpeed(fast);
+        Motor_Left->setSpeed(fast);
         Left_Motor_Speed = fast;
     }
     if (Right_Motor_Speed != fast)
     {
-        Right_Motor->setSpeed(fast);
+        Motor_Right->setSpeed(fast);
         Right_Motor_Speed = fast;
     }
 }
