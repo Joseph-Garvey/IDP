@@ -93,12 +93,6 @@ void Test_Connections(){
         }
     }
     // line following sensors
-        String command = Serial.readStringUntil('\n');
-        if (command == "y"){
-            motors_connected = true;
-        }
-    }
-    // line following sensors
     // Then test grabber
     bool grabbers_calibrated = false;
     while (!grabbers_calibrated)
@@ -110,27 +104,22 @@ void Test_Connections(){
             Servo1.write(85);
             Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
             {
-                if (Serial.read('y'))
+                if (Serial.read() == 'y')
                 {
                     grabbers_calibrated = true;
                 }
             }
         }
     }
-    // test optical sensor
-    bool optics_functioning = false;
-    while (!optics_functioning)
-    {
-    block_type = digitalRead(LDR_Grabber);
-    if (block_type == HIGH)
-    {
-        Serial.println("LOW DENSITY");
-    }
-    else
-    {
-        Serial.println("HIGH DENSITY");
-    }
-    }
+    // // test optical sensor
+    // bool optics_functioning = false;
+    // while (!optics_functioning)
+    // {
+    //     block_type = digitalRead(LDR_Grabber);
+    //     if (block_type == HIGH){ Serial.println("LOW DENSITY"); }
+    //     else { Serial.println("HIGH DENSITY"); }
+    // }
+}
 
 /// Reads Line Sensors, Outputs to Serial
 void ReadLineSensor()
@@ -502,76 +491,77 @@ void TunnelRoutine()
 
 void loop()
 {
-    // Tunnel Routine
-    while (ReadTunnelLDR())
-    {
-        TunnelRoutine();
-    }
-    CountJunctions(); // Count single intersections and double intersections
-    ReadSideIR();
-    if (doubleintersection == 0)
-    {
-        // Initial Movement
-        Move_Straight();
-    }
-    if (doubleintersection == 2)
-    {
-        // Initial Turn
-        Move_Stop();
-        JunctionRoutine();
-    }
-    if (grabbed && intersection == Desired_Intersection)
-    {
-        // Dropping Routine
-        Move_Stop();
-        JunctionRoutine();
-        DropRoutine();
-    }
-    if (not grabbed && JunctionDetected && intersection == 2)
-    {
-        ReadFrontIR();
-        if (BlockDetected_Front)
-        {
-            //forward grab routine
-            while (IR_Front_Reading > 2)
-            {
-                ReadFrontIR();
-                Move_Straight();
-                Move_Stop();
-                Servo1.write(85); // grab
-                grabbed = true;
-            }
-        }
-    }
-    if (not grabbed && BlockDetected_Left)
-    {
-        if (intersection == 2)
-        {
-            ReadFrontIR();
-            if (BlockDetected_Front)
-            {
-                //forward grab routine
-                while (IR_Front_Reading > 2)
-                {
-                    ReadFrontIR();
-                    Move_Straight();
-                    Move_Stop();
-                    Servo1.write(85); // grab
-                    grabbed = true;
-                }
-            }
-        }
-        else if (intersection == 3)
-        {
-            //side grab routine
-            Move_Stop();
-            JunctionRoutine();
-            GrabRoutine();       // Goes forward, grabs the block, goes backwards. Also sets if grabber = true or false
-            DetectDensityRoutine(); // Determines density and sets Desired_Intersection
-            JunctionRoutine();      // Turns back to track
-        }
-    }
-    NormalRoutine();
+  NormalRoutine();
+    // // Tunnel Routine
+    // while (ReadTunnelLDR())
+    // {
+    //     TunnelRoutine();
+    // }
+    // CountJunctions(); // Count single intersections and double intersections
+    // ReadSideIR();
+    // if (doubleintersection == 0)
+    // {
+    //     // Initial Movement
+    //     Move_Straight();
+    // }
+    // if (doubleintersection == 2)
+    // {
+    //     // Initial Turn
+    //     Move_Stop();
+    //     JunctionRoutine();
+    // }
+    // if (grabbed && intersection == Desired_Intersection)
+    // {
+    //     // Dropping Routine
+    //     Move_Stop();
+    //     JunctionRoutine();
+    //     DropRoutine();
+    // }
+    // if (not grabbed && JunctionDetected && intersection == 2)
+    // {
+    //     ReadFrontIR();
+    //     if (BlockDetected_Front)
+    //     {
+    //         //forward grab routine
+    //         while (IR_Front_Reading > 2)
+    //         {
+    //             ReadFrontIR();
+    //             Move_Straight();
+    //             Move_Stop();
+    //             Servo1.write(85); // grab
+    //             grabbed = true;
+    //         }
+    //     }
+    // }
+    // if (not grabbed && BlockDetected_Left)
+    // {
+    //     if (intersection == 2)
+    //     {
+    //         ReadFrontIR();
+    //         if (BlockDetected_Front)
+    //         {
+    //             //forward grab routine
+    //             while (IR_Front_Reading > 2)
+    //             {
+    //                 ReadFrontIR();
+    //                 Move_Straight();
+    //                 Move_Stop();
+    //                 Servo1.write(85); // grab
+    //                 grabbed = true;
+    //             }
+    //         }
+    //     }
+    //     else if (intersection == 3)
+    //     {
+    //         //side grab routine
+    //         Move_Stop();
+    //         JunctionRoutine();
+    //         GrabRoutine();       // Goes forward, grabs the block, goes backwards. Also sets if grabber = true or false
+    //         DetectDensityRoutine(); // Determines density and sets Desired_Intersection
+    //         JunctionRoutine();      // Turns back to track
+    //     }
+    // }
+    // NormalRoutine();
 }
 // Things to do
 // Fix Global variable declarations, all messed up right now
