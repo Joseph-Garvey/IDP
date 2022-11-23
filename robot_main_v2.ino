@@ -3,16 +3,16 @@
 #include <Servo.h>
 // README
 // Pin Definitions
-#define IRPin A0
+#define Front_IR_Sensor A0
 #define Line_Left_Sensor A1
 #define Line_Right_Sensor A2
-#define Proximity_Front_LED 8
-// #define currentservopin
-// #define J_Line_Left_Sensor
-// #define J_Line_Right_Sensor
-// #define Side_IR_Sensor
-// #define Front_IR_Sensor
-// #define LDR_Sensor
+#define Proximity_Front_LED 9
+#define currentservopin 3
+#define J_Line_Left_Sensor 12
+#define J_Line_Right_Sensor 13
+#define Side_IR_Sensor A3
+#define Tunnel_LDR_Sensor 6
+#define block_sensor 8
 // README
 // Left Line Sensor = A1
 // Right Line Sensor = A2
@@ -64,8 +64,10 @@ Adafruit_DCMotor *Right_Motor = AFMS.getMotor(4);   // And Right to Port 2
 void setup()
 {
     Serial.begin(9600);
-    pinMode(IRPin, INPUT);
+    pinMode(Front_IR_Sensor, INPUT);
     pinMode(Proximity_Front_LED, OUTPUT);
+    pinMode(Side_IR_Sensor, INPUT);
+    pinMode(block_sensor, INPUT_PULLUP);
     pinMode(currentservoPin, INPUT);
     // We need to attach the servo to the used pin number 
     Servo1.attach(servoPin); 
