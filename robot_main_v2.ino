@@ -3,11 +3,11 @@
 #include <Servo.h>
 // README
 // Pin Definitions
-#define IR_Front A0 // Pin for block sensor on front (Analog).
+#define IR_Front_Sensor A0 // Pin for block sensor on front (Analog).
 #define Line_Left_Sensor A1 // Pin for Left Line Sensor (Analog).
 #define Line_Right_Sensor A2 // Pin for Right Sensor (Analog).
-#define IR_Left A3 // Pin for block sensor on Left side (Analog).
-#define LDR_Tunnel 2 // Pin for detecting if the robot is entering the tunnel.
+#define IR_Left_Sensor A3 // Pin for block sensor on Left side (Analog).
+#define LDR_Tunnel_Sensor 2 // Pin for detecting if the robot is entering the tunnel.
 #define LED_HighDensity 6 // RED LED.
 #define LED_Moving 7 // Flashing LED.
 #define LDR_Grabber 8 // Sensor for block detection.
@@ -17,24 +17,29 @@
 #define Junction_Right_Sensor 13 // Pin for Junction on Right (Digital).
 
 /// Variable Declaration
+// Sensors
 float Line_Left_Reading;
 float Line_Right_Reading;
+bool Junction_Left_Reading;
+bool Junction_Right_Reading;
+int Line_Threshold = 60;
+float IR_Front_Reading;
+int IR_Threshold = 350;
+// const int LDR_Threshold = 10;
+
+// Motors
 const int max_speed_delta = 150;
 int slow;
 const int fast = 255;
-bool J_Line_Left;
-bool J_Line_Right;
-int Line_Threshold = 60;
-float IR_Front;
-int IR_Threshold = 350;
 uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
 int cycles_deviated = 0;
-// const int LDR_Threshold = 10;
+int cycles_max = 3000;
+// Logic
 int intersection = 0;
 int doubleintersection = 0;
 const int distance_to_wall = 3;
-int cycles_max = 3000;
+
 bool clockwise = true;
 int Desired_Intersection = 500;
 bool grabbed = false;
@@ -42,6 +47,7 @@ int junction_iteration = 0;
 bool JunctionDetected = false;
 bool FrontBlockDetected = false;
 bool SideBlockDetected = false;
+
 
 Servo Servo1;
 
@@ -55,11 +61,7 @@ void setup()
 {
     Serial.begin(9600);
     // Enable Pins
-    pinMode(Front_IR_Sensor, INPUT);
-    pinMode(Proximity_Front_LED, OUTPUT);
-    pinMode(Side_IR_Sensor, INPUT);
-    pinMode(block_sensor, INPUT_PULLUP);
-    pinMode(currentservoPin, INPUT);
+    pinMode(LDR_Grabber, INPUT_PULLUP);
     // We need to attach the servo to the used pin number 
     Servo1.attach(servoPin); 
     // Set forward motor direction.
@@ -88,10 +90,10 @@ void Test_Connections(){
 /// Reads Line Sensors, Outputs to Serial
 void ReadLineSensor()
 {
-    Line_Left = analogRead(Line_Left_Sensor);
-    Line_Right = analogRead(Line_Right_Pin);
+    Line_Left_Reading = analogRead(Line_Left_Sensor);
+    Line_Right_Reading = analogRead(Line_Right_Sensor);
     // Serial.println("L / R Line Sensors");
-    Serial.print(Line_Left);
+    Serial.print(Line_Left_Reading);
     Serial.print(" ");
     Serial.print(Line_Threshold);
     Serial.print(" ");
@@ -104,19 +106,19 @@ void ReadLineSensor()
     Serial.print(slow);
     Serial.print(" ");
     ///
-    Serial.println(Line_Right);
+    Serial.println(Line_Right_Reading);
     // Serial.println("L/R Sensor Output");
 }
 
 bool ReadTunnelLDR()
 {
     // Digital read
-    bool Tunnel_LDR = digitalRead(Tunnel_LDR_Sensor)
+    bool Tunnel_LDR = digitalRead(LDR_Tunnel_Sensor)
 }
 
 void ReadFrontIR()
 {
-    Front_IR_Reading = anologRead(Front_IR_Sensor)
+    Front_IR_Reading = anologRead(IR_Front_Sensor)
     if (Front_IR_Reading < 10) // distance from junction 2 to middle block + some kind of additional distance for leeway
     {
         FrontBlockDetected = true
@@ -142,25 +144,25 @@ void ReadSideIR()
 
 void ReadJLineSensor()
 {
-    J_Line_Right = digitalRead(J_Line_Right_Sensor)
-    J_Line_Left = digitalRead(Junction_Left_Sensor)
+    Junction_Right_Reading = digitalRead(J_Line_Right_Sensor)
+    Junction_Left_Reading = digitalRead(Junction_Left_Sensor)
 }
 
 void CountJunctions()
 {
     ReadJLineSensor();
-    if (J_Line_Right && J_Line_Left)
+    if (Junction_Right_Reading && Junction_Left_Reading)
     {
         doubleintersection += 1
         delay(1000);
     }
-    else if (J_Line_Right || J_Line_Left && clockwise)
+    else if (Junction_Right_Reading || Junction_Left_Reading && clockwise)
     {
         bool JunctionDetected = true
         intersection += 1;
         delay(1000);
     }
-    else if (J_Line_Right || J_Line_Left && clockwise == false)
+    else if (Junction_Right_Reading || Junction_Left_Reading && clockwise == false)
     {
         bool JunctionDetected = true
         intersection -= 1;
@@ -312,7 +314,7 @@ void Move_CW()
 
 void DetectDensityRoutine()
 {
-    block_type = digitalRead(block_sensor);
+    block_type = digitalRead(LDR_Grabber);
     Serial.print("Block type:  ");
     if (block_type == HIGH)
     {
@@ -336,7 +338,7 @@ void GrabRoutine(){
     Servo1.write(85) // close
     grabbed = true
     ReadJLineSensor();
-    while (J_Line_Left != true && J_Line_Right != true)
+    while (Junction_Left_Reading != true && Junction_Right_Reading != true)
     {
         ReadJLineSensor();
         Move_Backwards();
@@ -348,7 +350,7 @@ void DropRoutine()
 {
     Move_Straight();
     delay(500);
-    while (J_Line_Left != true && J_Line_Right != true)
+    while (Junction_Left_Reading != true && Junction_Right_Reading != true)
     {
         ReadJLineSensor();
         Move_Straight();
@@ -358,7 +360,7 @@ void DropRoutine()
     grabbed = false
     Move_Backwards;
     delay(500);
-    while (J_Line_Left != true && J_Line_Right != true)
+    while (Junction_Left_Reading != true && Junction_Right_Reading != true)
     {
         ReadJLineSensor();
         Move_Backwards();
@@ -368,41 +370,41 @@ void DropRoutine()
 void JunctionRoutine()
 {
     ReadJLineSensor();
-    if (J_Line_Right && J_Line_Left && grabbed != true && doubleintersection == 2)
+    if (Junction_Right_Reading && Junction_Left_Reading && grabbed != true && doubleintersection == 2)
     {
-        while (J_Line_Right != true)
+        while (Junction_Right_Reading != true)
         {
             ReadJLineSensor();
             Move_CW();
         }
     }
-    else if (J_Line_Right && J_Line_Left && grabbed != true)
+    else if (Junction_Right_Reading && Junction_Left_Reading && grabbed != true)
     {
-        while (J_Line_Right != true)
+        while (Junction_Right_Reading != true)
         {
             ReadJLineSensor();
             Move_ACW();
         }
     }
-    else if (J_Line_Right && J_Line_Left && grabbed)
+    else if (Junction_Right_Reading && Junction_Left_Reading && grabbed)
     {
-        while (J_Line_Left != true)
+        while (Junction_Left_Reading != true)
         {
             ReadJLineSensor();
             Move_CW();
         }
     }
-    else if (J_Line_Right)
+    else if (Junction_Right_Reading)
     {
-        while (J_Line_Left != true)
+        while (Junction_Left_Reading != true)
         {
             ReadJLineSensor();
             Move_CW();
         }
     }
-    else if (J_Line_Left)
+    else if (Junction_Left_Reading)
     {
-        while (J_Line_Right != true)
+        while (Junction_Right_Reading != true)
         {
             ReadJLineSensor();
             Move_ACW();

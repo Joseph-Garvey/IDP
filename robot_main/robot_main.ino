@@ -63,7 +63,7 @@ void setup()
 void ReadLineSensor()
 {
   Line_Left = analogRead(Line_Left_Sensor);
-  Line_Right = analogRead(Line_Right_Sensor);
+  Line_Right = analogRead(Line_Right);
   // Serial.println("L / R Line Sensors");
   Serial.print(Line_Left);
   Serial.print(" ");
