@@ -21,12 +21,12 @@
 // LDR_Sensor =
 
 /// Variable Declaration
-const int max_speed_delta = 150;
+const int max_speed_delta = 50;
 int slow;
 const int fast = 255;
 float Line_Left;
 float Line_Right;
-int Line_Threshold = 60;
+int Line_Threshold = 400;
 float IR_Front;
 int IR_Threshold = 350;
 uint8_t Left_Motor_Speed = slow;
@@ -46,8 +46,8 @@ Adafruit_DCMotor *Motor_Right = AFMS.getMotor(2);   // And Right to Port 2
 void setup()
 {
   Serial.begin(9600);
-  pinMode(IRPin, INPUT);
-  pinMode(Proximity_Front_LED, OUTPUT);
+  // pinMode(IRPin, INPUT);
+  // pinMode(Proximity_Front_LED, OUTPUT);
   // Ensure Motor Shield is connected to Arduino.
   while (!AFMS.begin()) 
   {
@@ -63,22 +63,25 @@ void setup()
 void ReadLineSensor()
 {
   Line_Left = analogRead(Line_Left_Sensor);
-  Line_Right = analogRead(Line_Right);
+  Line_Right = analogRead(Line_Right_Sensor);
   // Serial.println("L / R Line Sensors");
+  Serial.print("Left_Sensor:");
   Serial.print(Line_Left);
-  Serial.print(" ");
-  Serial.print(Line_Threshold);
-  Serial.print(" ");
+  Serial.print(",");
+  Serial.print("Right_Sensor:");
+  Serial.print(Line_Right);
+  Serial.print(",");
   /// this should be somewhere else
   // IR_Front = analogRead(IRPin);
   // Serial.print(IR_Front);
   // Serial.print(" ");
-  Serial.print(cycles_deviated);
-  Serial.print(" ");
-  Serial.print(slow);
-  Serial.print(" ");
+  //Serial.print(cycles_deviated);
+  //Serial.print(" ");
+  //Serial.print(slow);
+  //Serial.print(" ");
   ///
-  Serial.println(Line_Right);
+  Serial.print("Line_Threshold:");
+  Serial.println(Line_Threshold);
   // Serial.println("L/R Sensor Output");
 }
 
@@ -233,12 +236,12 @@ void loop()
   // TODO test if setting motor speed here or in the function is faster? Use of two variable versus one
   Motor_Left->setSpeed(Left_Motor_Speed);
   Motor_Right->setSpeed(Right_Motor_Speed);
-  if (IR_Front > IR_Threshold)
-  {
-    digitalWrite(Proximity_Front_LED, HIGH);
-  }
-  else
-  {
-    digitalWrite(Proximity_Front_LED, LOW);
-  }
+  // if (IR_Front > IR_Threshold)
+  // {
+  //   digitalWrite(Proximity_Front_LED, HIGH);
+  // }
+  // else
+  // {
+  //   digitalWrite(Proximity_Front_LED, LOW);
+  // }
 }

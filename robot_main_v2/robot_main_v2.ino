@@ -22,7 +22,8 @@ float Line_Left_Reading;
 float Line_Right_Reading;
 bool Junction_Left_Reading;
 bool Junction_Right_Reading;
-int Line_Threshold = 60;
+int Left_Line_Threshold = 150;
+int Right_Line_Threshold = 300;
 float IR_Front_Reading;
 float IR_Left_Reading;
 int IR_Threshold = 350;
@@ -54,8 +55,8 @@ Servo Servo1;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
-Adafruit_DCMotor *Motor_Left = AFMS.getMotor(3);    // Connect Left Motor as Port 1
-Adafruit_DCMotor *Motor_Right = AFMS.getMotor(4);   // And Right to Port 2
+Adafruit_DCMotor *Motor_Left = AFMS.getMotor(1);    // Connect Left Motor as Port 1
+Adafruit_DCMotor *Motor_Right = AFMS.getMotor(2);   // And Right to Port 2
 
 /// INITIAL SETUP
 void setup()
@@ -65,10 +66,12 @@ void setup()
     pinMode(LDR_Grabber, INPUT_PULLUP);
     // We need to attach the servo to the used pin number 
     Servo1.attach(Grabber); 
-    // Set forward motor direction.
-    Motor_Left->run(FORWARD);
-    Motor_Right->run(FORWARD);
-    Test_Connections();
+    while (!AFMS.begin())
+    {
+        Serial.println("Could not find Motor Shield. Check wiring.");
+    }
+    Serial.println("Motor Shield Connected. Checking Motor Connections.");
+    //Test_Connections();
 }
 
 /// Test Suites
@@ -83,34 +86,38 @@ void Test_Connections(){
     Motor_Left->run(BACKWARD);
     Motor_Right->run(FORWARD);
     Motor_Left->setSpeed(fast);
-    Motor_Left->setSpeed(fast);
+    Motor_Right->setSpeed(fast);
     while(!motors_connected)
     {
         Serial.println(("Right Motor spinning forward, Left spinning backward. Check connections and type 'y' to proceed."));
         String command = Serial.readStringUntil('\n');
         if (command == "y"){
             motors_connected = true;
+            Motor_Left->run(RELEASE);
+            Motor_Right->run(RELEASE);
         }
+        delay(1000);
     }
     // line following sensors
-    // Then test grabber
-    bool grabbers_calibrated = false;
-    while (!grabbers_calibrated)
-    {
-        Servo1.write(40);
-        Serial.println(("Grabber is open. Check and type 'y' to proceed."));
-        if (Serial.read() == 'y')
-        {
-            Servo1.write(85);
-            Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
-            {
-                if (Serial.read() == 'y')
-                {
-                    grabbers_calibrated = true;
-                }
-            }
-        }
-    }
+    // // Then test grabber
+    // bool grabbers_calibrated = false;
+    // while (!grabbers_calibrated)
+    // {
+    //     Servo1.write(40);
+    //     Serial.println(("Grabber is open. Check and type 'y' to proceed."));
+    //     if (Serial.read() == 'y')
+    //     {
+    //         Servo1.write(85);
+    //         Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
+    //         {
+    //             if (Serial.read() == 'y')
+    //             {
+    //                 grabbers_calibrated = true;
+    //             }
+    //         }
+    //     }
+    //     delay(1000);
+    // }
     // // test optical sensor
     // bool optics_functioning = false;
     // while (!optics_functioning)
@@ -127,21 +134,24 @@ void ReadLineSensor()
     Line_Left_Reading = analogRead(Line_Left_Sensor);
     Line_Right_Reading = analogRead(Line_Right_Sensor);
     // Serial.println("L / R Line Sensors");
+    Serial.print("Left_Sensor:");
     Serial.print(Line_Left_Reading);
-    Serial.print(" ");
-    Serial.print(Line_Threshold);
-    Serial.print(" ");
+    Serial.print(",");
+    Serial.print("Right_Sensor:");
+    Serial.print(Line_Right_Reading);
+    Serial.print(",");
+    Serial.print(Right_Line_Threshold);
+    Serial.print(",");
+    Serial.print("Left_Line_Threshold:");
+    Serial.println(Left_Line_Threshold);
     /// this should be somewhere else
     // IR_Front = analogRead(IRPin);
     // Serial.print(IR_Front);
     // Serial.print(" ");
-    Serial.print(cycles_deviated);
-    Serial.print(" ");
-    Serial.print(slow);
-    Serial.print(" ");
-    ///
-    Serial.println(Line_Right_Reading);
-    // Serial.println("L/R Sensor Output");
+    //Serial.print(cycles_deviated);
+    //Serial.print(" ");
+    //Serial.print(slow);
+    //Serial.print(" ");
 }
 
 bool ReadTunnelLDR()
@@ -453,15 +463,15 @@ void NormalRoutine()
 {
     ReadLineSensor();
     ReadJLineSensor();
-    if (Line_Left_Reading > Line_Threshold && Line_Right_Reading > Line_Threshold)
+    if (Line_Left_Reading > Left_Line_Threshold && Line_Right_Reading > Right_Line_Threshold)
     {
         Move_Straight();
     }
-    else if (Line_Left_Reading > Line_Threshold && Line_Right_Reading < Line_Threshold)
+    else if (Line_Left_Reading > Left_Line_Threshold && Line_Right_Reading < Right_Line_Threshold)
     {
         Move_Left();
     }
-    else if (Line_Left_Reading < Line_Threshold && Line_Right_Reading > Line_Threshold)
+    else if (Line_Left_Reading < Left_Line_Threshold && Line_Right_Reading > Right_Line_Threshold)
     {
         Move_Right();
     }
@@ -488,7 +498,7 @@ void TunnelRoutine()
         Move_Straight();
     }
 }
-
+ 
 void loop()
 {
   NormalRoutine();
