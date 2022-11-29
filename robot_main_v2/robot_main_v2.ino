@@ -350,7 +350,6 @@ void Move_CW()
 void DetectDensityRoutine()
 {
     bool block_type = digitalRead(LDR_Grabber);
-    Serial.print("Block type:  ");
     if (block_type == HIGH)
     {
         Desired_Intersection = 1;
