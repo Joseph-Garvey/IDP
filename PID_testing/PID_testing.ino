@@ -1,4 +1,9 @@
 #include <Adafruit_MotorShield.h>
+#include <PID_v1.h>
+
+double Setpoint, Input, Output;
+double Kp=2, Ki=5, Kd=1;
+PID myPIDController(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 const int Left_Line_Sensor = A3; //LEFT
 const int Right_Line_Sensor = A2; //RIGHT
@@ -19,10 +24,11 @@ void setup() {
   while(!AFMS.begin()){
         Serial.println("Could not find Motor Shield. Check wiring.");
   }
-  Left_Motor->setSpeed(100);
-  Right_Motor->setSpeed(100);
   Left_Motor->run(FORWARD);
   Right_Motor->run(FORWARD);
+  Setpoint = 0;
+  myPIDController.SetMode(AUTOMATIC);
+  myPIDController.SetSampleTime(25);
 }
 
 void loop() {
@@ -30,41 +36,17 @@ void loop() {
   //READ SENSORS
   Line_Left = analogRead(Left_Line_Sensor);
   Line_Right = analogRead(Right_Line_Sensor) + offset;
-  Serial.print("Threshold:");
-  Serial.print(threshold);
-  Serial.print(",");
+  Input = Line_Left - Line_Right;
+  myPIDController.Compute();
   Serial.print("Left_Sensor:");
   Serial.print(Line_Left);
   Serial.print(",");
   Serial.print("Right_Sensor:");
-  Serial.println(Line_Right);
-  //NAVIGATE
-  if(Line_Left > threshold){
-    if(Line_Right > threshold){
-      //Serial.print("STRAIGHT");
-      //if(Left_Motor.speed) to avoid too many unnecessary commands
-      Left_Motor->setSpeed(fast);
-      Right_Motor->setSpeed(fast);
-    }
-    else{
-      //left
-      //Serial.print("LEFT");
-      Left_Motor->setSpeed(slow);
-      Right_Motor->setSpeed(fast);
-    }
-  }
-  else{
-    if(Line_Right > threshold){
-      // right
-      //Serial.print("right");
-      Left_Motor->setSpeed(fast);
-      Right_Motor->setSpeed(slow);
-    }
-    else{
-      //Serial.print("Lost");
-      //this is lost
-      //Left_Motor->run(FORWARD);
-    }
-  }
-  
+  Serial.print(Line_Right);
+  Serial.print(",");
+  Serial.print("input:");
+  Serial.print(Input);
+  Serial.print(",");
+  Serial.print("Output:");
+  Serial.println(Output);
 }

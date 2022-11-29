@@ -29,7 +29,7 @@ int IR_Threshold = 350;
 // const int LDR_Threshold = 10;
 
 // Motors
-const int max_speed_delta = 150;
+const int max_speed_delta = 50;
 int slow;
 const int fast = 255;
 uint8_t Left_Motor_Speed = slow;
@@ -98,23 +98,23 @@ void Test_Connections(){
     }
     // line following sensors
     // Then test grabber
-    bool grabbers_calibrated = false;
-    while (!grabbers_calibrated)
-    {
-        Servo1.write(40);
-        Serial.println(("Grabber is open. Check and type 'y' to proceed."));
-        if (Serial.read() == 'y')
-        {
-            Servo1.write(85);
-            Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
-            {
-                if (Serial.read() == 'y')
-                {
-                    grabbers_calibrated = true;
-                }
-            }
-        }
-    }
+    // bool grabbers_calibrated = false;
+    // while (!grabbers_calibrated)
+    // {
+    //     Servo1.write(40);
+    //     Serial.println(("Grabber is open. Check and type 'y' to proceed."));
+    //     if (Serial.read() == 'y')
+    //     {
+    //         Servo1.write(85);
+    //         Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
+    //         {
+    //             if (Serial.read() == 'y')
+    //             {
+    //                 grabbers_calibrated = true;
+    //             }
+    //         }
+    //     }
+    // }
     // // test optical sensor
     // bool optics_functioning = false;
     // while (!optics_functioning)
@@ -408,10 +408,10 @@ void JunctionRoutine()
     {
         Move_Straight();
         delay(500);
-        while (Line_Left_Reading > Line_Threshold)
+        while (Line_Right_Reading > Line_Threshold)
         {
             ReadLineSensor();
-            Move_CW();
+            Move_ACW();
         }
     }
     else if (Junction_Right_Reading && Junction_Left_Reading && grabbed != true)

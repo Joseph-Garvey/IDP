@@ -4,10 +4,10 @@
 // README
 // Pin Definitions
 #define IR_Front_Sensor A0 // Pin for block sensor on front (Analog).
-#define Line_Left_Sensor A1 // Pin for Left Line Sensor (Analog).
-#define Line_Right_Sensor A2 // Pin for Right Sensor (Analog).
-#define IR_Left_Sensor A3 // Pin for block sensor on Left side (Analog).
-#define LDR_Tunnel_Sensor 2 // Pin for detecting if the robot is entering the tunnel.
+#define Line_Left_Sensor A3 // Pin for Left Line Sensor (Analog).
+#define Line_Right_Sensor A2 // Pin for Right Line Sensor (Analog).
+#define IR_Left_Sensor A1 // Pin for block sensor on Left side (Analog).
+#define LDR_Tunnel_Sensor 0 // Pin for detecting if the robot is entering the tunnel.
 #define LED_HighDensity 6 // RED LED.
 #define LED_Moving 7 // Flashing LED.
 #define LDR_Grabber 8 // Sensor for block detection.
@@ -22,21 +22,21 @@ float Line_Left_Reading;
 float Line_Right_Reading;
 bool Junction_Left_Reading;
 bool Junction_Right_Reading;
-int Left_Line_Threshold = 150;
-int Right_Line_Threshold = 300;
+int Left_Line_Threshold = 320;
+int Right_Line_Threshold = 135;
 float IR_Front_Reading;
 float IR_Left_Reading;
 int IR_Threshold = 350;
 // const int LDR_Threshold = 10;
 
 // Motors
-const int max_speed_delta = 150;
+const int max_speed_delta = 125;
 int slow;
 const int fast = 255;
 uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
 int cycles_deviated = 0;
-int cycles_max = 3000;
+int cycles_max = 5000;
 // Logic
 int intersection = 0;
 int doubleintersection = 0;
@@ -140,6 +140,7 @@ void ReadLineSensor()
     Serial.print("Right_Sensor:");
     Serial.print(Line_Right_Reading);
     Serial.print(",");
+    Serial.print("Right_Line_Threshold:");
     Serial.print(Right_Line_Threshold);
     Serial.print(",");
     Serial.print("Left_Line_Threshold:");
@@ -156,8 +157,9 @@ void ReadLineSensor()
 
 bool ReadTunnelLDR()
 {
-    // Digital read
+    // Digital read 
     bool Tunnel_LDR = digitalRead(LDR_Tunnel_Sensor);
+    Serial.println(Tunnel_LDR);
 }
 
 void ReadFrontIR()
@@ -176,6 +178,8 @@ void ReadFrontIR()
 void ReadSideIR()
 {
     IR_Left_Reading = analogRead(IR_Left_Sensor);
+    Serial.print("IR_LEFT:");
+    Serial.println(IR_Left_Reading);
     if (IR_Left_Reading < 5)
     {
         BlockDetected_Left = true;
@@ -477,7 +481,7 @@ void NormalRoutine()
     }
     else
     {
-        Move_Lost();
+        //Move_Lost();
     }
     // TODO test if setting motor speed here or in the function is faster? Use of two variable versus one
 }
@@ -501,12 +505,12 @@ void TunnelRoutine()
  
 void loop()
 {
-  NormalRoutine();
+  //NormalRoutine();
     // // Tunnel Routine
-    // while (ReadTunnelLDR())
-    // {
-    //     TunnelRoutine();
-    // }
+    while (ReadTunnelLDR())
+    {
+        TunnelRoutine();
+    }
     // CountJunctions(); // Count single intersections and double intersections
     // ReadSideIR();
     // if (doubleintersection == 0)
