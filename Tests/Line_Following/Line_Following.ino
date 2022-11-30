@@ -2,11 +2,11 @@
 
 const int Left_Line_Sensor = A3; //LEFT
 const int Right_Line_Sensor = A2; //RIGHT
-const int slow = 80;
-const int fast = 220;
+const int slow = 100;
+const int fast = 255;
 float Line_Left;
 float Line_Right;
-float offset = 120;
+float offset = 20;
 float threshold = 350.0; // edit this
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();

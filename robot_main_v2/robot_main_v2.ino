@@ -22,15 +22,15 @@ float Line_Left_Reading;
 float Line_Right_Reading;
 bool Junction_Left_Reading;
 bool Junction_Right_Reading;
-int Left_Line_Threshold = 320;
-int Right_Line_Threshold = 135;
+int Left_Line_Threshold = 200;
+int Right_Line_Threshold = 100;
 float IR_Front_Reading;
 float IR_Left_Reading;
 int IR_Threshold = 350;
 // const int LDR_Threshold = 10;
 
 // Motors
-const int max_speed_delta = 125;
+const int max_speed_delta = 100;
 int slow;
 const int fast = 255;
 uint8_t Left_Motor_Speed = slow;
@@ -159,6 +159,7 @@ bool ReadTunnelLDR()
 {
     // Digital read 
     bool Tunnel_LDR = digitalRead(LDR_Tunnel_Sensor);
+    Serial.print("Tunnel_LDR:");
     Serial.println(Tunnel_LDR);
 }
 
@@ -311,22 +312,23 @@ void Calc_Turning_Rate()
 
 void Move_Lost()
 {
-    slow = 0;
-    if (Left_Motor_Speed == fast && Right_Motor_Speed == slow)
-    {
-        Motor_Right->setSpeed(slow);
-        Right_Motor_Speed = slow;
+    if(Junction_Left_Reading){
+        Move_Left();
     }
-    else if (Left_Motor_Speed == slow && Right_Motor_Speed == fast)
+    else if (Junction_Right_Reading)
     {
-        Motor_Left->setSpeed(slow);
-        Left_Motor_Speed = slow;
+        Move_Right();
     }
-    else
+    else if (Left_Motor_Speed != fast)
     {
-        Motor_Left->run(BACKWARD);
-        Motor_Right->run(BACKWARD);
+        Move_Left();
     }
+    else if (Right_Motor_Speed != fast)
+    {
+        Move_Right();
+    }
+    
+    
 }
 
 void Move_ACW()
@@ -465,7 +467,6 @@ void JunctionRoutine()
 
 void NormalRoutine()
 {
-    ReadLineSensor();
     ReadJLineSensor();
     if (Line_Left_Reading > Left_Line_Threshold && Line_Right_Reading > Right_Line_Threshold)
     {
@@ -505,9 +506,10 @@ void TunnelRoutine()
  
 void loop()
 {
-  //NormalRoutine();
-    // // Tunnel Routine
-    while (ReadTunnelLDR())
+    ReadLineSensor();
+    NormalRoutine();
+    // Tunnel Routine
+    while (ReadTunnelLDR() && (Line_Left_Reading < Left_Line_Threshold) && (Line_Right_Reading < Right_Line_Threshold))
     {
         TunnelRoutine();
     }

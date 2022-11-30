@@ -12,5 +12,5 @@ void setup() {
 void loop() {
 reflection = analogRead(IRPin);
 Serial.println(reflection);
-delay(1000);
+
 }

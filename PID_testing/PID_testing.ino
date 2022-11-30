@@ -1,9 +1,11 @@
+#include <PID_AutoTune_v0.h>
 #include <Adafruit_MotorShield.h>
 #include <PID_v1.h>
 
 double Setpoint, Input, Output;
 double Kp=2, Ki=5, Kd=1;
 PID myPIDController(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+PID_ATune PIDTuner (&Input, &Output);
 
 const int Left_Line_Sensor = A3; //LEFT
 const int Right_Line_Sensor = A2; //RIGHT
