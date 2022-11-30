@@ -31,7 +31,7 @@ int offset = 25;
 
 // Motors
 const int max_speed_delta = 200;
-int slow;
+int slow = 100;
 const int fast = 255;
 uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
@@ -159,8 +159,8 @@ bool ReadTunnelLDR()
 {
     // Digital read 
     bool Tunnel_LDR = digitalRead(LDR_Tunnel_Sensor);
-    Serial.print("Tunnel_LDR:");
-    Serial.println(Tunnel_LDR);
+    //Serial.print("Tunnel_LDR:");
+    //Serial.println(Tunnel_LDR);
 }
 
 void ReadFrontIR()
@@ -271,7 +271,7 @@ void Move_Left()
 {
     Motor_Left->run(FORWARD);
     Motor_Right->run(FORWARD);
-    Calc_Turning_Rate();
+    //Calc_Turning_Rate();
     // Serial.print("LEFT");
     if (Left_Motor_Speed != slow)
     {
@@ -289,7 +289,7 @@ void Move_Right()
 {
     Motor_Left->run(FORWARD);
     Motor_Right->run(FORWARD);
-    Calc_Turning_Rate();
+    //Calc_Turning_Rate();
     // Serial.print("RIGHT");
     if (Left_Motor_Speed != fast)
     {
@@ -467,17 +467,20 @@ void JunctionRoutine()
 void NormalRoutine()
 {
     ReadJLineSensor();
-    if (Line_Left_Reading > Threshold && Line_Right_Reading > Threshold)
+    if (Junction_Left_Reading && Junction_Right_Reading)
     {
         Move_Straight();
+        Serial.println("Straight");
     }
-    else if (Line_Left_Reading > Threshold && Line_Right_Reading < Threshold)
+    else if (Junction_Right_Reading)
     {
         Move_Left();
+        Serial.println("Right");
     }
-    else if (Line_Left_Reading < Threshold && Line_Right_Reading > Threshold)
+    else if (Junction_Left_Reading)
     {
         Move_Right();
+        Serial.println("Left");
     }
     else
     {
@@ -505,15 +508,22 @@ void TunnelRoutine()
  
 void loop()
 {
-    ReadLineSensor();
+    //ReadLineSensor();
     NormalRoutine();
     // Tunnel Routine
     while (ReadTunnelLDR() && (Line_Left_Reading < Threshold) && (Line_Right_Reading < Threshold))
     {
         TunnelRoutine();
     }
+    Serial.print("Junction_Left:");
+    Serial.print(Junction_Left_Reading);
+    Serial.print(",");
+    Serial.print("Junction Right");
+    Serial.print(Junction_Right_Reading);
+    Serial.print(",");
     Serial.print("Left_MotorSpeed:");
-    Serial.println(Left_Motor_Speed);
+    Serial.print(Left_Motor_Speed);
+    Serial.print(",");
     Serial.print("Right_MotorSpeed:");
     Serial.println(Right_Motor_Speed);
     // CountJunctions(); // Count single intersections and double intersections

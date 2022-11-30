@@ -192,7 +192,7 @@ void loop()
     //if (loopon)
     //{
         Move_Straight();
-        delay(500);
+        delay(2500);
         Move_Stop();
         Move_ACW();
         delay(rotatingtime1);
