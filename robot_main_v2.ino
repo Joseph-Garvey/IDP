@@ -4,10 +4,10 @@
 // README
 // Pin Definitions
 #define IR_Front_Sensor A0 // Pin for block sensor on front (Analog).
-#define Line_Left_Sensor A3 // Pin for Left Line Sensor (Analog).
-#define Line_Right_Sensor A2 // Pin for Right Line Sensor (Analog).
-#define IR_Left_Sensor A1 // Pin for block sensor on Left side (Analog).
-#define LDR_Tunnel_Sensor 0 // Pin for detecting if the robot is entering the tunnel.
+#define Line_Left_Sensor A1 // Pin for Left Line Sensor (Analog).
+#define Line_Right_Sensor A2 // Pin for Right Sensor (Analog).
+#define IR_Left_Sensor A3 // Pin for block sensor on Left side (Analog).
+#define LDR_Tunnel_Sensor 2 // Pin for detecting if the robot is entering the tunnel.
 #define LED_HighDensity 6 // RED LED.
 #define LED_Moving 7 // Flashing LED.
 #define LDR_Grabber 8 // Sensor for block detection.
@@ -22,21 +22,20 @@ float Line_Left_Reading;
 float Line_Right_Reading;
 bool Junction_Left_Reading;
 bool Junction_Right_Reading;
-int Left_Line_Threshold = 200;
-int Right_Line_Threshold = 100;
+int Line_Threshold = 60;
 float IR_Front_Reading;
 float IR_Left_Reading;
 int IR_Threshold = 350;
 // const int LDR_Threshold = 10;
 
 // Motors
-const int max_speed_delta = 100;
+const int max_speed_delta = 150;
 int slow;
 const int fast = 255;
 uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
 int cycles_deviated = 0;
-int cycles_max = 5000;
+int cycles_max = 3000;
 // Logic
 int intersection = 0;
 int doubleintersection = 0;
@@ -55,8 +54,8 @@ Servo Servo1;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
-Adafruit_DCMotor *Motor_Left = AFMS.getMotor(1);    // Connect Left Motor as Port 1
-Adafruit_DCMotor *Motor_Right = AFMS.getMotor(2);   // And Right to Port 2
+Adafruit_DCMotor *Motor_Left = AFMS.getMotor(3);    // Connect Left Motor as Port 1
+Adafruit_DCMotor *Motor_Right = AFMS.getMotor(4);   // And Right to Port 2
 
 /// INITIAL SETUP
 void setup()
@@ -66,12 +65,10 @@ void setup()
     pinMode(LDR_Grabber, INPUT_PULLUP);
     // We need to attach the servo to the used pin number 
     Servo1.attach(Grabber); 
-    while (!AFMS.begin())
-    {
-        Serial.println("Could not find Motor Shield. Check wiring.");
-    }
-    Serial.println("Motor Shield Connected. Checking Motor Connections.");
-    //Test_Connections();
+    // Set forward motor direction.
+    Motor_Left->run(FORWARD);
+    Motor_Right->run(FORWARD);
+    Test_Connections();
 }
 
 /// Test Suites
@@ -86,47 +83,54 @@ void Test_Connections(){
     Motor_Left->run(BACKWARD);
     Motor_Right->run(FORWARD);
     Motor_Left->setSpeed(fast);
-    Motor_Right->setSpeed(fast);
+    Motor_Left->setSpeed(fast);
     while(!motors_connected)
     {
         Serial.println(("Right Motor spinning forward, Left spinning backward. Check connections and type 'y' to proceed."));
         String command = Serial.readStringUntil('\n');
         if (command == "y"){
             motors_connected = true;
-            Motor_Left->run(RELEASE);
-            Motor_Right->run(RELEASE);
         }
-        delay(1000);
     }
     // line following sensors
-    // // Then test grabber
-    // bool grabbers_calibrated = false;
-    // while (!grabbers_calibrated)
-    // {
-    //     Servo1.write(40);
-    //     Serial.println(("Grabber is open. Check and type 'y' to proceed."));
-    //     if (Serial.read() == 'y')
-    //     {
-    //         Servo1.write(85);
-    //         Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
-    //         {
-    //             if (Serial.read() == 'y')
-    //             {
-    //                 grabbers_calibrated = true;
-    //             }
-    //         }
-    //     }
-    //     delay(1000);
-    // }
-    // // test optical sensor
-    // bool optics_functioning = false;
-    // while (!optics_functioning)
-    // {
-    //     block_type = digitalRead(LDR_Grabber);
-    //     if (block_type == HIGH){ Serial.println("LOW DENSITY"); }
-    //     else { Serial.println("HIGH DENSITY"); }
-    // }
-}
+        String command = Serial.readStringUntil('\n');
+        if (command == "y"){
+            motors_connected = true;
+        }
+    }
+    // line following sensors
+    // Then test grabber
+    bool grabbers_calibrated = false;
+    while(!grabbers_calibrated)
+    {
+        Servo1.write(40);
+        Serial.println(("Grabber is open. Check and type 'y' to proceed."));
+        if (Serial.read() == 'y')
+        {
+            Servo1.write(85);
+            Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
+            {
+                if (Serial.read('y'))
+                {
+                    grabbers_calibrated = true;
+                }
+            }
+        }
+    }
+    // test optical sensor
+    bool optics_functioning = false;
+    while (!optics_functioning)
+    {
+    block_type = digitalRead(LDR_Grabber);
+    if (block_type == HIGH)
+    {
+        Serial.println("LOW DENSITY");
+    }
+    else
+    {
+        Serial.println("HIGH DENSITY");
+    }
+    }
 
 /// Reads Line Sensors, Outputs to Serial
 void ReadLineSensor()
@@ -134,33 +138,27 @@ void ReadLineSensor()
     Line_Left_Reading = analogRead(Line_Left_Sensor);
     Line_Right_Reading = analogRead(Line_Right_Sensor);
     // Serial.println("L / R Line Sensors");
-    Serial.print("Left_Sensor:");
     Serial.print(Line_Left_Reading);
-    Serial.print(",");
-    Serial.print("Right_Sensor:");
-    Serial.print(Line_Right_Reading);
-    Serial.print(",");
-    Serial.print("Right_Line_Threshold:");
-    Serial.print(Right_Line_Threshold);
-    Serial.print(",");
-    Serial.print("Left_Line_Threshold:");
-    Serial.println(Left_Line_Threshold);
+    Serial.print(" ");
+    Serial.print(Line_Threshold);
+    Serial.print(" ");
     /// this should be somewhere else
     // IR_Front = analogRead(IRPin);
     // Serial.print(IR_Front);
     // Serial.print(" ");
-    //Serial.print(cycles_deviated);
-    //Serial.print(" ");
-    //Serial.print(slow);
-    //Serial.print(" ");
+    Serial.print(cycles_deviated);
+    Serial.print(" ");
+    Serial.print(slow);
+    Serial.print(" ");
+    ///
+    Serial.println(Line_Right_Reading);
+    // Serial.println("L/R Sensor Output");
 }
 
 bool ReadTunnelLDR()
 {
-    // Digital read 
+    // Digital read
     bool Tunnel_LDR = digitalRead(LDR_Tunnel_Sensor);
-    Serial.print("Tunnel_LDR:");
-    Serial.println(Tunnel_LDR);
 }
 
 void ReadFrontIR()
@@ -179,8 +177,6 @@ void ReadFrontIR()
 void ReadSideIR()
 {
     IR_Left_Reading = analogRead(IR_Left_Sensor);
-    Serial.print("IR_LEFT:");
-    Serial.println(IR_Left_Reading);
     if (IR_Left_Reading < 5)
     {
         BlockDetected_Left = true;
@@ -312,23 +308,22 @@ void Calc_Turning_Rate()
 
 void Move_Lost()
 {
-    if(Junction_Left_Reading){
-        Move_Left();
-    }
-    else if (Junction_Right_Reading)
+    slow = 0;
+    if (Left_Motor_Speed == fast && Right_Motor_Speed == slow)
     {
-        Move_Right();
+        Motor_Right->setSpeed(slow);
+        Right_Motor_Speed = slow;
     }
-    else if (Left_Motor_Speed != fast)
+    else if (Left_Motor_Speed == slow && Right_Motor_Speed == fast)
     {
-        Move_Left();
+        Motor_Left->setSpeed(slow);
+        Left_Motor_Speed = slow;
     }
-    else if (Right_Motor_Speed != fast)
+    else
     {
-        Move_Right();
+        Motor_Left->run(BACKWARD);
+        Motor_Right->run(BACKWARD);
     }
-    
-    
 }
 
 void Move_ACW()
@@ -366,6 +361,7 @@ void Move_CW()
 void DetectDensityRoutine()
 {
     bool block_type = digitalRead(LDR_Grabber);
+    Serial.print("Block type:  ");
     if (block_type == HIGH)
     {
         Desired_Intersection = 1;
@@ -466,22 +462,23 @@ void JunctionRoutine()
 
 void NormalRoutine()
 {
+    ReadLineSensor();
     ReadJLineSensor();
-    if (Line_Left_Reading > Left_Line_Threshold && Line_Right_Reading > Right_Line_Threshold)
+    if (Line_Left_Reading > Line_Threshold && Line_Right_Reading > Line_Threshold)
     {
         Move_Straight();
     }
-    else if (Line_Left_Reading > Left_Line_Threshold && Line_Right_Reading < Right_Line_Threshold)
+    else if (Line_Left_Reading > Line_Threshold && Line_Right_Reading < Line_Threshold)
     {
         Move_Left();
     }
-    else if (Line_Left_Reading < Left_Line_Threshold && Line_Right_Reading > Right_Line_Threshold)
+    else if (Line_Left_Reading < Line_Threshold && Line_Right_Reading > Line_Threshold)
     {
         Move_Right();
     }
     else
     {
-        //Move_Lost();
+        Move_Lost();
     }
     // TODO test if setting motor speed here or in the function is faster? Use of two variable versus one
 }
@@ -502,81 +499,79 @@ void TunnelRoutine()
         Move_Straight();
     }
 }
- 
+
 void loop()
 {
-    ReadLineSensor();
-    NormalRoutine();
     // Tunnel Routine
-    while (ReadTunnelLDR() && (Line_Left_Reading < Left_Line_Threshold) && (Line_Right_Reading < Right_Line_Threshold))
+    while (ReadTunnelLDR())
     {
         TunnelRoutine();
     }
-    // CountJunctions(); // Count single intersections and double intersections
-    // ReadSideIR();
-    // if (doubleintersection == 0)
-    // {
-    //     // Initial Movement
-    //     Move_Straight();
-    // }
-    // if (doubleintersection == 2)
-    // {
-    //     // Initial Turn
-    //     Move_Stop();
-    //     JunctionRoutine();
-    // }
-    // if (grabbed && intersection == Desired_Intersection)
-    // {
-    //     // Dropping Routine
-    //     Move_Stop();
-    //     JunctionRoutine();
-    //     DropRoutine();
-    // }
-    // if (not grabbed && JunctionDetected && intersection == 2)
-    // {
-    //     ReadFrontIR();
-    //     if (BlockDetected_Front)
-    //     {
-    //         //forward grab routine
-    //         while (IR_Front_Reading > 2)
-    //         {
-    //             ReadFrontIR();
-    //             Move_Straight();
-    //             Move_Stop();
-    //             Servo1.write(85); // grab
-    //             grabbed = true;
-    //         }
-    //     }
-    // }
-    // if (not grabbed && BlockDetected_Left)
-    // {
-    //     if (intersection == 2)
-    //     {
-    //         ReadFrontIR();
-    //         if (BlockDetected_Front)
-    //         {
-    //             //forward grab routine
-    //             while (IR_Front_Reading > 2)
-    //             {
-    //                 ReadFrontIR();
-    //                 Move_Straight();
-    //                 Move_Stop();
-    //                 Servo1.write(85); // grab
-    //                 grabbed = true;
-    //             }
-    //         }
-    //     }
-    //     else if (intersection == 3)
-    //     {
-    //         //side grab routine
-    //         Move_Stop();
-    //         JunctionRoutine();
-    //         GrabRoutine();       // Goes forward, grabs the block, goes backwards. Also sets if grabber = true or false
-    //         DetectDensityRoutine(); // Determines density and sets Desired_Intersection
-    //         JunctionRoutine();      // Turns back to track
-    //     }
-    // }
-    // NormalRoutine();
+    CountJunctions(); // Count single intersections and double intersections
+    ReadSideIR();
+    if (doubleintersection == 0)
+    {
+        // Initial Movement
+        Move_Straight();
+    }
+    if (doubleintersection == 2)
+    {
+        // Initial Turn
+        Move_Stop();
+        JunctionRoutine();
+    }
+    if (grabbed && intersection == Desired_Intersection)
+    {
+        // Dropping Routine
+        Move_Stop();
+        JunctionRoutine();
+        DropRoutine();
+    }
+    if (not grabbed && JunctionDetected && intersection == 2)
+    {
+        ReadFrontIR();
+        if (BlockDetected_Front)
+        {
+            //forward grab routine
+            while (IR_Front_Reading > 2)
+            {
+                ReadFrontIR();
+                Move_Straight();
+                Move_Stop();
+                Servo1.write(85); // grab
+                grabbed = true;
+            }
+        }
+    }
+    if (not grabbed && BlockDetected_Left)
+    {
+        if (intersection == 2)
+        {
+            ReadFrontIR();
+            if (BlockDetected_Front)
+            {
+                //forward grab routine
+                while (IR_Front_Reading > 2)
+                {
+                    ReadFrontIR();
+                    Move_Straight();
+                    Move_Stop();
+                    Servo1.write(85); // grab
+                    grabbed = true;
+                }
+            }
+        }
+        else if (intersection == 3)
+        {
+            //side grab routine
+            Move_Stop();
+            JunctionRoutine();
+            GrabRoutine();       // Goes forward, grabs the block, goes backwards. Also sets if grabber = true or false
+            DetectDensityRoutine(); // Determines density and sets Desired_Intersection
+            JunctionRoutine();      // Turns back to track
+        }
+    }
+    NormalRoutine();
 }
 // Things to do
 // Fix Global variable declarations, all messed up right now
