@@ -140,49 +140,24 @@ void Move_Straight()
 {
     Motor_Left->run(FORWARD);
     Motor_Right->run(FORWARD);
-        // Serial.print("STRAIGHT");
-        cycles_deviated = 0;
-    if (Left_Motor_Speed != fast)
-    {
-        Motor_Left->setSpeed(fast);
-        Left_Motor_Speed = fast;
-    }
-    if (Right_Motor_Speed != fast)
-    {
-        Motor_Right->setSpeed(fast);
-        Right_Motor_Speed = fast;
-    }
+    Motor_Left->setSpeed(fast);
+    Motor_Right->setSpeed(fast);
 }
 
 void Move_CW()
 {
     Motor_Left->run(FORWARD);
     Motor_Right->run(BACKWARD);
-    if (Left_Motor_Speed != fast)
-    {
-        Motor_Left->setSpeed(fast);
-        Left_Motor_Speed = fast;
-    }
-    if (Right_Motor_Speed != fast)
-    {
-        Motor_Right->setSpeed(fast);
-        Right_Motor_Speed = fast;
-    }
+    Motor_Left->setSpeed(fast);
+    Motor_Right->setSpeed(fast);
 }
 
 void Move_ACW()
 {
     Motor_Left->run(BACKWARD);
     Motor_Right->run(FORWARD);
-    if (Left_Motor_Speed != fast)
-    {
-        Motor_Left->setSpeed(fast);
-        Left_Motor_Speed = fast;
-    }
-    if (Right_Motor_Speed != fast)
-    {
-        Motor_Right->setSpeed(fast);
-        Right_Motor_Speed = fast;
+    Motor_Left->setSpeed(fast);
+    Motor_Right->setSpeed(fast);
     }
 }
 
