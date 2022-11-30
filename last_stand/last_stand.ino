@@ -7,7 +7,6 @@
 #define Line_Left_Sensor A1 // Pin for Left Line Sensor (Analog).
 #define Line_Right_Sensor A2 // Pin for Right Sensor (Analog).
 #define IR_Left_Sensor A3 // Pin for block sensor on Left side (Analog).
-#define Flip_Flop_Circuit 1 //
 #define LDR_Tunnel_Sensor 2 // Pin for detecting if the robot is entering the tunnel.
 #define LED_HighDensity 6 // RED LED.
 #define LED_Moving 7 // Flashing LED.
@@ -16,7 +15,8 @@
 #define LED_LowDensity 11 // GREEN LED.
 #define Junction_Left_Sensor 12 // Pin for Junction on Left (Digital).
 #define Junction_Right_Sensor 13 // Pin for Junction on Right (Digital).
-
+#define Button_On 0
+#define Flashing_Light 1
 /// Variable Declaration
 // Sensors
 float Line_Left_Reading;
@@ -32,6 +32,7 @@ int IR_Threshold = 350;
 // Motors
 const int max_speed_delta = 50;
 int slow;
+int turn = 150;
 const int fast = 255;
 uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
@@ -65,18 +66,14 @@ Adafruit_DCMotor *Motor_Right = AFMS.getMotor(2);   // And Right to Port 2
 void setup()
 {
     Serial.begin(9600);
-    // Enable Pins
-    pinMode(LDR_Grabber, INPUT_PULLUP);
-    // We need to attach the servo to the used pin number 
-    Servo1.attach(Grabber); 
-    // Set forward motor direction.
-    Motor_Left->run(FORWARD);
-    Motor_Right->run(FORWARD);
+    // Set forward motor direction.v
     while (!AFMS.begin())
     {
         Serial.println("Could not find Motor Shield. Check wiring.");
     }
     Serial.println("Motor Shield Connected. Checking Motor Connections.");
+    Motor_Left->run(FORWARD);
+    Motor_Right->run(FORWARD);
     //Test_Connections();
 }
 
@@ -132,12 +129,14 @@ void Test_Connections(){
 
 void Move_Stop()
 {
+  Serial.print("STOP");
     Motor_Left->setSpeed(0);
     Motor_Right->setSpeed(0);
 }
 
 void Move_Straight()
 {
+  Serial.println("STRAIGHT");
     Motor_Left->run(FORWARD);
     Motor_Right->run(FORWARD);
     Motor_Left->setSpeed(fast);
@@ -146,19 +145,20 @@ void Move_Straight()
 
 void Move_CW()
 {
+  Serial.print("cw");
     Motor_Left->run(FORWARD);
     Motor_Right->run(BACKWARD);
-    Motor_Left->setSpeed(fast);
-    Motor_Right->setSpeed(fast);
+    Motor_Left->setSpeed(turn);
+    Motor_Right->setSpeed(turn);
 }
 
 void Move_ACW()
 {
+  Serial.print("acw");
     Motor_Left->run(BACKWARD);
     Motor_Right->run(FORWARD);
-    Motor_Left->setSpeed(fast);
-    Motor_Right->setSpeed(fast);
-    }
+    Motor_Left->setSpeed(turn);
+    Motor_Right->setSpeed(turn);
 }
 
 void loop()
@@ -166,29 +166,22 @@ void loop()
     //loopon = digitalRead(Flip_Flop_Circuit);
     //if (loopon)
     //{
-        Move_Straight();
-        delay(2500);
-        Move_Stop();
-        Move_ACW();
-        delay(rotatingtime1);
-        Move_Straight();
-        delay(forwardtime1);
-        Move_Stop();
-        Move_CW();
-        delay(rotatingtime1);
-        Move_Stop();
-        Move_Straight();
-        delay(forwardtime2);
-        Move_Stop();
-        Servo1.write(85); // close
-        Move_CW();
-        delay(rotatingtime2);
-        Move_Stop();
-        Move_Straight();
-        delay(forwardtime2);
-        Move_Stop();
-        Move_CW();
-        delay(rotatingtime1);
-        Move_Stop();
+      delay(5000);
+      Move_Straight();
+      delay(1000);
+      Move_Stop();
+      delay(100);
+      Move_ACW();
+      delay(2000);
+      Move_Stop();
+      Move_Straight();
+      delay(9000);
+      Move_CW();
+      delay(1200);
+      Move_Straight();
+      delay(9000);
+      Move_Stop();
+      while(true){}
+      delay(rotatingtime1);
     //}
 }
