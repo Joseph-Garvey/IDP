@@ -83,6 +83,7 @@ void setup()
     Serial.println("Motor Shield Connected. Checking Motor Connections.");
     // Line enabled when electrical or mechanical changes made.
     // Test_Connections();
+    delay(500);
 }
 
 /// Used to test electrical connections after electrical or mechnanical changes are made. 
@@ -533,6 +534,7 @@ void loop()
     bool LoopOn = digitalRead(PushButton);
     while (!LoopOn)
     {
+        delay(100);
         bool LoopOn = digitalRead(PushButton);
     }
     ReadLineSensor();
