@@ -530,6 +530,11 @@ void TunnelRoutine()
  
 void loop()
 {
+    bool LoopOn = digitalRead(PushButton);
+    while (!LoopOn)
+    {
+        bool LoopOn = digitalRead(PushButton);
+    }
     ReadLineSensor();
     NormalRoutine();
     // Tunnel Routine
