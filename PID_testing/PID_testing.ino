@@ -13,7 +13,7 @@ const int slow = 80;
 const int fast = 220;
 float Line_Left;
 float Line_Right;
-float offset = 120;
+float Line_sensoroffset = 120;
 float threshold = 350.0; // edit this
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
@@ -37,7 +37,7 @@ void loop() {
   
   //READ SENSORS
   Line_Left = analogRead(Left_Line_Sensor);
-  Line_Right = analogRead(Right_Line_Sensor) + offset;
+  Line_Right = analogRead(Right_Line_Sensor) + Line_sensoroffset;
   Input = Line_Left - Line_Right;
   myPIDController.Compute();
   Serial.print("Left_Sensor:");
