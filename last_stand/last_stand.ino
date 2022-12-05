@@ -43,7 +43,7 @@ int intersection = 0;
 int doubleintersection = 0;
 const int distance_to_wall = 3;
 
-int Desired_Intersection = 500;
+int Block_Dropoff_Location = 500;
 bool grabbed = false;
 int junction_iteration = 0;
 bool JunctionDetected = false;

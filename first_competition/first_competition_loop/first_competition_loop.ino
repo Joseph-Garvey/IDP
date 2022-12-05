@@ -41,7 +41,7 @@ int intersection = 0;
 int doubleintersection = 0;
 const int distance_to_wall = 3;
 
-int Desired_Intersection = 500;
+int Block_Dropoff_Location = 500;
 bool grabbed = false;
 int junction_iteration = 0;
 bool JunctionDetected = false;
@@ -351,11 +351,11 @@ void DetectDensityRoutine()
     Serial.print("Block type:  ");
     if (block_type == HIGH)
     {
-        Desired_Intersection = 1;
+        Block_Dropoff_Location = 1;
     }
     else
     {
-        Desired_Intersection = 4;
+        Block_Dropoff_Location = 4;
     }
 }
 
@@ -529,7 +529,7 @@ void loop()
     //     Move_Stop();
     //     JunctionRoutine();
     // }
-    // if (grabbed && intersection == Desired_Intersection)
+    // if (grabbed && intersection == Block_Dropoff_Location)
     // {
     //     // Dropping Routine
     //     Move_Stop();
@@ -576,7 +576,7 @@ void loop()
     //         Move_Stop();
     //         JunctionRoutine();
     //         GrabRoutine();       // Goes forward, grabs the block, goes backwards. Also sets if grabber = true or false
-    //         DetectDensityRoutine(); // Determines density and sets Desired_Intersection
+    //         DetectDensityRoutine(); // Determines density and sets Block_Dropoff_Location
     //         JunctionRoutine();      // Turns back to track
     //     }
     // }

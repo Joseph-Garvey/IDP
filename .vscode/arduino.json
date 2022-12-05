@@ -2,5 +2,7 @@
     "configuration": "mode=on",
     "board": "arduino:megaavr:uno2018",
     "port": "COM3",
-    "sketch": "robot_main_v2.ino"
+    "sketch": "robot_main_v2.ino",
+    "programmer": "arduino:medbg",
+    "output": "C://Users//josep//Desktop//Build"
 }

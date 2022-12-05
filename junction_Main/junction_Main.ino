@@ -22,12 +22,12 @@ float Line_Left_Reading;
 float Line_Right_Reading;
 bool Junction_Left_Reading;
 bool Junction_Right_Reading;
-int Threshold = 175;
+int Line_Threshold = 175;
 float IR_Front_Reading;
 float IR_Left_Reading;
 int IR_Threshold = 350;
 // const int LDR_Threshold = 10;
-int offset = 25;
+int Line_sensoroffset = 25;
 
 // Motors
 const int max_speed_delta = 200;
@@ -43,7 +43,7 @@ int doubleintersection = 0;
 const int distance_to_wall = 3;
 
 bool clockwise = true;
-int Desired_Intersection = 500;
+int Block_Dropoff_Location = 500;
 bool grabbed = false;
 int junction_iteration = 0;
 bool JunctionDetected = false;
@@ -132,7 +132,7 @@ void Test_Connections(){
 void ReadLineSensor()
 {
     Line_Left_Reading = analogRead(Line_Left_Sensor);
-    Line_Right_Reading = analogRead(Line_Right_Sensor) + offset;
+    Line_Right_Reading = analogRead(Line_Right_Sensor) + Line_sensoroffset;
     // Serial.println("L / R Line Sensors");
     Serial.print("Left_Sensor:");
     Serial.print(Line_Left_Reading);
@@ -140,11 +140,11 @@ void ReadLineSensor()
     Serial.print("Right_Sensor:");
     Serial.print(Line_Right_Reading);
     Serial.print(",");
-    Serial.print("Threshold:");
-    Serial.print(Threshold);
+    Serial.print("Line_Threshold:");
+    Serial.print(Line_Threshold);
     Serial.print(",");
-    Serial.print("Threshold:");
-    Serial.println(Threshold);
+    Serial.print("Line_Threshold:");
+    Serial.println(Line_Threshold);
     /// this should be somewhere else
     // IR_Front = analogRead(IRPin);
     // Serial.print(IR_Front);
@@ -368,11 +368,11 @@ void DetectDensityRoutine()
     bool block_type = digitalRead(LDR_Grabber);
     if (block_type == HIGH)
     {
-        Desired_Intersection = 1;
+        Block_Dropoff_Location = 1;
     }
     else
     {
-        Desired_Intersection = 4;
+        Block_Dropoff_Location = 4;
     }
 }
 
@@ -511,7 +511,7 @@ void loop()
     //ReadLineSensor();
     NormalRoutine();
     // Tunnel Routine
-    while (ReadTunnelLDR() && (Line_Left_Reading < Threshold) && (Line_Right_Reading < Threshold))
+    while (ReadTunnelLDR() && (Line_Left_Reading < Line_Threshold) && (Line_Right_Reading < Line_Threshold))
     {
         TunnelRoutine();
     }
@@ -539,7 +539,7 @@ void loop()
     //     Move_Stop();
     //     JunctionRoutine();
     // }
-    // if (grabbed && intersection == Desired_Intersection)
+    // if (grabbed && intersection == Block_Dropoff_Location)
     // {
     //     // Dropping Routine
     //     Move_Stop();
@@ -586,7 +586,7 @@ void loop()
     //         Move_Stop();
     //         JunctionRoutine();
     //         GrabRoutine();       // Goes forward, grabs the block, goes backwards. Also sets if grabber = true or false
-    //         DetectDensityRoutine(); // Determines density and sets Desired_Intersection
+    //         DetectDensityRoutine(); // Determines density and sets Block_Dropoff_Location
     //         JunctionRoutine();      // Turns back to track
     //     }
     // }
