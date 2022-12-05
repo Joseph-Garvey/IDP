@@ -51,7 +51,7 @@ bool BlockDetected_Front = false;
 bool BlockDetected_Left = false;
 
 
-Servo Servo1;
+Servo Grabber_Servo;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
@@ -65,7 +65,7 @@ void setup()
     // Enable Pins
     pinMode(LDR_Grabber, INPUT_PULLUP);
     // We need to attach the servo to the used pin number 
-    Servo1.attach(Grabber); 
+    Grabber_Servo.attach(Grabber); 
     while (!AFMS.begin())
     {
         Serial.println("Could not find Motor Shield. Check wiring.");
@@ -103,11 +103,11 @@ void Test_Connections(){
     // bool grabbers_calibrated = false;
     // while (!grabbers_calibrated)
     // {
-    //     Servo1.write(40);
+    //     Grabber_Servo.write(40);
     //     Serial.println(("Grabber is open. Check and type 'y' to proceed."));
     //     if (Serial.read() == 'y')
     //     {
-    //         Servo1.write(85);
+    //         Grabber_Servo.write(85);
     //         Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
     //         {
     //             if (Serial.read() == 'y')
@@ -176,7 +176,7 @@ void ReadFrontIR()
     }
 }
 
-void ReadSideIR()
+void ReadLeftIR()
 {
     IR_Left_Reading = analogRead(IR_Left_Sensor);
     Serial.print("IR_LEFT:");
@@ -385,7 +385,7 @@ void GrabRoutine(){
         Move_Straight();
     }
     Move_Stop();
-    Servo1.write(85); // close
+    Grabber_Servo.write(85); // close
     grabbed = true;
     ReadJLineSensor();
     while (Junction_Left_Reading != true && Junction_Right_Reading != true)
@@ -406,7 +406,7 @@ void DropRoutine()
         Move_Straight();
     }
     Move_Stop();
-    Servo1.write(40); // open
+    Grabber_Servo.write(40); // open
     grabbed = false;
     Move_Backwards;
     delay(500);
@@ -491,7 +491,7 @@ void NormalRoutine()
 
 void TunnelRoutine()
 {
-    ReadSideIR();
+    ReadLeftIR();
     if (IR_Left_Reading < distance_to_wall)
     {
         Move_Left();
@@ -527,7 +527,7 @@ void loop()
     Serial.print("Right_MotorSpeed:");
     Serial.println(Right_Motor_Speed);
     // CountJunctions(); // Count single intersections and double intersections
-    // ReadSideIR();
+    // ReadLeftIR();
     // if (doubleintersection == 0)
     // {
     //     // Initial Movement
@@ -557,7 +557,7 @@ void loop()
     //             ReadFrontIR();
     //             Move_Straight();
     //             Move_Stop();
-    //             Servo1.write(85); // grab
+    //             Grabber_Servo.write(85); // grab
     //             grabbed = true;
     //         }
     //     }
@@ -575,7 +575,7 @@ void loop()
     //                 ReadFrontIR();
     //                 Move_Straight();
     //                 Move_Stop();
-    //                 Servo1.write(85); // grab
+    //                 Grabber_Servo.write(85); // grab
     //                 grabbed = true;
     //             }
     //         }

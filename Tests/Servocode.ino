@@ -5,16 +5,16 @@
 int servoPin = 3; 
 float servocurrent;
 // Create a servo object 
-Servo Servo1; 
+Servo Grabber_Servo; 
 void setup() { 
   Serial.begin(9600);
   pinMode(currentservoPin, INPUT);
    // We need to attach the servo to the used pin number 
-   Servo1.attach(servoPin); 
+   Grabber_Servo.attach(servoPin); 
 }
 void loop(){ 
    // Make servo go to open  
-   Servo1.write(40); 
+   Grabber_Servo.write(40); 
    for (int i = 0; i < 5; i++) {
      servocurrent = analogRead(currentservoPin);
      Serial.print("open: ");
@@ -22,7 +22,7 @@ void loop(){
      delay(1000);
    } 
   // Make servo go to close
-   Servo1.write(85); 
+   Grabber_Servo.write(85); 
    for (int i = 0; i < 5; i++) {
     servocurrent = analogRead(currentservoPin);
     Serial.print("close: ");

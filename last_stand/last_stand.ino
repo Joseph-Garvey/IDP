@@ -55,7 +55,7 @@ int rotatingtime2 = 1500;
 int forwardtime1 = 3000;
 int forwardtime2 = 3000;
 
-Servo Servo1;
+Servo Grabber_Servo;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
@@ -103,11 +103,11 @@ void Test_Connections(){
     // bool grabbers_calibrated = false;
     // while (!grabbers_calibrated)
     // {
-    //     Servo1.write(40);
+    //     Grabber_Servo.write(40);
     //     Serial.println(("Grabber is open. Check and type 'y' to proceed."));
     //     if (Serial.read() == 'y')
     //     {
-    //         Servo1.write(85);
+    //         Grabber_Servo.write(85);
     //         Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
     //         {
     //             if (Serial.read() == 'y')

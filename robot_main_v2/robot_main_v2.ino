@@ -1,6 +1,6 @@
 /// README ///
 // Naming Conventions: [INPUT/OUTPUT]_[Position-Optional]_[Descriptor]
-// Descriptors will be of the form "Sensor" for the pinouts, "Reading" for sensor outputs.
+// Descriptors will be of the form "Sensor" for the pinouts, "Reading" for sensor outputs and "Threshold".
 
 /// Libraries
 // Referenced here without dependencies.
@@ -9,18 +9,18 @@
 #include <Servo.h> // https://www.arduino.cc/reference/en/libraries/servo/
 
 /// Arduino Pinouts
-#define IR_Front_Sensor A0 // Used for block detection. (Analog).
-#define Line_Left_Sensor A3 // Line Tracking (Analog).
-#define Line_Right_Sensor A2 // Line Tracking (Analog).
-#define IR_Left_Sensor A1 // Block detection perpendicular to robot path. (Analog).
-#define LDR_Tunnel_Sensor 0 // Detects whether robot has entered tunnel. (Digital).
-#define LED_HighDensity 6 // RED LED. Activated when High Density Block is detected. (Digital).
-#define LED_Moving 7 // Amber Flashing LED. HIGH when Robot is in motion. (Digital).
-#define LDR_Grabber 8 // Distinguishes between HIGH and LOW density blocks. (Digital).
+#define IR_Front_Sensor A0 // Used for block detection. (Analog IN).
+#define Line_Left_Sensor A3 // Line Tracking (Analog IN).
+#define Line_Right_Sensor A2 // Line Tracking (Analog IN).
+#define IR_Left_Sensor A1 // Block detection perpendicular to robot path. (Analog IN).
+#define LDR_Tunnel_Sensor 0 // Detects whether robot has entered tunnel. (Digital IN).
+#define LED_HighDensity 6 // RED LED. Activated when High Density Block is detected. (Digital OUT).
+#define LED_Moving 7 // Amber Flashing LED. HIGH when Robot is in motion. (Digital OUT).
+#define LDR_Grabber 8 // Distinguishes between HIGH and LOW density blocks. (Digital IN PULLUP).
 #define Grabber 9 // Servo output. Connected to the grabber mechanism. (PWM Digital, connected to Motor Shield)
-#define LED_LowDensity 11 // Green LED. Activated when Low Density Block is detected. (Digital).
-#define Junction_Left_Sensor 12 // HIGH when junction is detected on left. (Digital).
-#define Junction_Right_Sensor 13 // HIGH when junction is deteced on right. (Digital).
+#define LED_LowDensity 11 // Green LED. Activated when Low Density Block is detected. (Digital OUT).
+#define Junction_Left_Sensor 12 // HIGH when junction is detected on left. (Digital IN).
+#define Junction_Right_Sensor 13 // HIGH when junction is deteced on right. (Digital IN).
 
 /// Variable Declaration
 // Sensor Outputs
@@ -32,6 +32,10 @@ const int Line_Threshold = 175; // Analog value above which the sensor is consid
 float IR_Front_Reading; // Analog output from Front IR.
 float IR_Left_Reading; // Analog output from Left IR.
 const int Line_sensoroffset = 25; // Added to the right line sensor to account for sensor variance.
+const int IR_Front_Threshold = 10; // Distance below which the robot detects a block in front of it.
+const int IR_Left_Threshold = 5; // Distance below which the robot detects a block to the side.
+// note when calibrating Front Threshold: set to distance from junction 2 to middle block + some kind of additional distance for leeway
+
 // Motor Variables and Constants
 const int max_speed_delta = 200; // Sets the difference in speed between the two motors.
 int slow; // The current slowest motor speed.
@@ -40,6 +44,9 @@ uint8_t Left_Motor_Speed = slow;
 uint8_t Right_Motor_Speed = slow;
 int cycles_deviated = 0; // Measure of how long robot has deviated from line.
 int cycles_max = 5000; // Sets max T at which robot will turn at its fastest rate.
+Servo Grabber_Servo; 
+const int grabber_closed = 85; // Sets fully closed position of grabber.
+const int grabber_open = 40; // Sets fully open position of grabber.
 
 // Navigation Logic
 int intersection = 0; // Count of intersections passed in this loop of table.
@@ -49,53 +56,48 @@ const int distance_to_wall = 3; // The distance the robot should maintain from t
 // Whilst this could be done in a more intelligent way, it wouldn't provide any benefit to this particular task, and would add unnecessary complexity.
 bool clockwise = true;
 int Block_Dropoff_Location; // Sets the junction at which the robot should dropoff the carried block.
-bool grabbed = false;
-int junction_iteration = 0;
+bool grabbed = false; // TRUE if robot is transporting a block.
 bool JunctionDetected = false;
 bool BlockDetected_Front = false;
 bool BlockDetected_Left = false;
-
-
-Servo Servo1;
 
 /// Motor Shield Setup
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
 Adafruit_DCMotor *Motor_Left = AFMS.getMotor(1);    // Connect Left Motor as Port 1
 Adafruit_DCMotor *Motor_Right = AFMS.getMotor(2);   // And Right to Port 2
 
-/// INITIAL SETUP
+/// Establishes pinouts and connects Motor Shield.
 void setup()
 {
     Serial.begin(9600);
-    // Enable Pins
-    pinMode(LDR_Grabber, INPUT_PULLUP);
-    // We need to attach the servo to the used pin number 
-    Servo1.attach(Grabber); 
-    while (!AFMS.begin())
-    {
-        Serial.println("Could not find Motor Shield. Check wiring.");
-    }
+    // Establish Connections
+    pinMode(LDR_Grabber, INPUT_PULLUP); // Enable LDR as Pullup Input.
+    pinMode(LED_HighDensity, OUTPUT); 
+    pinMode(LED_LowDensity, OUTPUT);
+    pinMode(LED_Moving, OUTPUT);
+    Grabber_Servo.attach(Grabber); // Connect Servo object to Arduino Output.
+    // Ensure motor shield is connected before proceding. 
+    while (!AFMS.begin()) { Serial.println("Could not find Motor Shield. Check wiring."); }
     Serial.println("Motor Shield Connected. Checking Motor Connections.");
-    //Test_Connections();
+    // Line enabled when electrical or mechanical changes made.
+    // Test_Connections();
 }
 
-/// Test Suites
+/// Used to test electrical connections after electrical or mechnanical changes are made. 
+/// Tests: DC Motors connected, Servo actuates, Block detection functions.
 void Test_Connections(){
-    // Ensure Motor Shield is connected to Arduino.
-    while (!AFMS.begin())
-    {
-        Serial.println("Could not find Motor Shield. Check wiring.");
-    }
-    Serial.println("Motor Shield Connected. Checking Motor Connections.");
+    // DC Motor Test //
+    // Run Motors in different directions at full speed.
     bool motors_connected = false;
     Motor_Left->run(BACKWARD);
     Motor_Right->run(FORWARD);
     Motor_Left->setSpeed(fast);
     Motor_Right->setSpeed(fast);
-    while(!motors_connected)
-    {
+    // While user has not confirmed that the motors are working as expected, wait for user input.
+    while(!motors_connected) {
         Serial.println(("Right Motor spinning forward, Left spinning backward. Check connections and type 'y' to proceed."));
         String command = Serial.readStringUntil('\n');
+        // Once user confirms, stop motors and continue.
         if (command == "y"){
             motors_connected = true;
             Motor_Left->run(RELEASE);
@@ -103,16 +105,16 @@ void Test_Connections(){
         }
         delay(1000);
     }
-    //line following sensors
-    // Then test grabber
+    // Grabber Test //
     bool grabbers_calibrated = false;
-    while (!grabbers_calibrated)
-    {
-        Servo1.write(40);
+    // Actuate grabbers to open, wait for user to confirm correct function.
+    // Actuate again to close, wait for user to confirm correct function.
+    while (!grabbers_calibrated) {
+        Grabber_Servo.write(grabber_open);
         Serial.println(("Grabber is open. Check and type 'y' to proceed."));
         if (Serial.read() == 'y')
         {
-            Servo1.write(85);
+            Grabber_Servo.write(grabber_closed);
             Serial.println(("Grabber is closed. Check and type 'y' to proceed."));
             {
                 if (Serial.read() == 'y')
@@ -123,22 +125,25 @@ void Test_Connections(){
         }
         delay(1000);
     }
-    // test optical sensor
-    bool optics_functioning = false;
-    while (!optics_functioning)
-    {
-        block_type = digitalRead(LDR_Grabber);
-        if (block_type == HIGH){ Serial.println("LOW DENSITY"); }
-        else { Serial.println("HIGH DENSITY"); }
+    // Block Detection Test //
+    bool block_detection_passed = false;
+    // Manually test the block detection, if user confirms working, proceed.
+    while (!block_detection_passed) 
+    { 
+        DetectDensityRoutine();
+        if(Serial.read() == 'y'){
+            block_detection_passed = true;
+        }
     }
+    Block_Dropoff_Location = 500; // reset block dropoff.
+    // Ideally line sensors should also be tested.
 }
 
-/// Reads Line Sensors, Outputs to Serial
+/// Reads Line Sensors and plots sensor output, motor speeds and line deviation time on Serial Plotter.
 void ReadLineSensor()
 {
     Line_Left_Reading = analogRead(Line_Left_Sensor);
-    Line_Right_Reading = analogRead(Line_Right_Sensor) + Line_sensoroffset;
-    // Serial.println("L / R Line Sensors");
+    Line_Right_Reading = analogRead(Line_Right_Sensor) + Line_sensoroffset; // Add offset to ensure sensors have the same threshold.
     Serial.print("Left_Sensor:");
     Serial.print(Line_Left_Reading);
     Serial.print(",");
@@ -148,18 +153,14 @@ void ReadLineSensor()
     Serial.print("Line_Threshold:");
     Serial.print(Line_Threshold);
     Serial.print(",");
-    Serial.print("Line_Threshold:");
-    Serial.println(Line_Threshold);
-    // this should be somewhere else
-    IR_Front = analogRead(IRPin);
-    Serial.print(IR_Front);
-    Serial.print(" ");
+    Serial.print("Cycles_Deviated:");
     Serial.print(cycles_deviated);
-    Serial.print(" ");
-    Serial.print(slow);
-    Serial.print(" ");
+    Serial.print(",");
+    Serial.print("Slow_MotorSpeed:");
+    Serial.println(slow);
 }
 
+/// Returns TRUE if robot is in the tunnel, outputs this value to Serial.
 bool ReadTunnelLDR()
 {
     // Digital read 
@@ -168,40 +169,34 @@ bool ReadTunnelLDR()
     Serial.println(Tunnel_LDR);
 }
 
+/// Reads Front IR Sensor, determines if there is something in front of the robot.
 void ReadFrontIR()
 {
     IR_Front_Reading = analogRead(IR_Front_Sensor);
-    if (IR_Front_Reading < 10) // distance from junction 2 to middle block + some kind of additional distance for leeway
-    {
-        BlockDetected_Front = true;
-    }
-    else
-    {
-        BlockDetected_Front = false;
-    }
+    // Whilst this value will be true due to other obstacles
+    // its result is ignored unless the robot is in a section of the table
+    // where it would expect to find a block.
+    // Hence, false positives aren't an issue here.
+    BlockDetected_Front = (IR_Front_Reading < IR_Front_Threshold);
 }
 
-void ReadSideIR()
+/// Reads Left IR Sensor, determines if there is a block to the side of the robot. Outputs the Side IR Reading to Serial.
+void ReadLeftIR()
 {
     IR_Left_Reading = analogRead(IR_Left_Sensor);
     Serial.print("IR_LEFT:");
     Serial.println(IR_Left_Reading);
-    if (IR_Left_Reading < 5)
-    {
-        BlockDetected_Left = true;
-    }
-    else
-    {
-        BlockDetected_Left = false;
-    }
+    BlockDetected_Left = (IR_Left_Reading < IR_Left_Threshold);
 }
 
+/// Updates Junction detection bools.
 void ReadJLineSensor()
 {
     Junction_Right_Reading = digitalRead(Junction_Right_Sensor);
     Junction_Left_Reading = digitalRead(Junction_Left_Sensor);
 }
 
+/// Updates the current intersections passed by the robot.
 void CountJunctions()
 {
     ReadJLineSensor();
@@ -373,10 +368,12 @@ void DetectDensityRoutine()
     bool block_type = digitalRead(LDR_Grabber);
     if (block_type == HIGH) // THe block is low density.
     {
+        Serial.println("LOW DENSITY");
         Block_Dropoff_Location = 1;
     }
     else // The block is high density.
     {
+        Serial.println("HIGH DENSITY");
         Block_Dropoff_Location = 4;
     }
 }
@@ -390,7 +387,7 @@ void GrabRoutine(){
         Move_Straight();
     }
     Move_Stop();
-    Servo1.write(85); // close
+    Grabber_Servo.write(85); // close
     grabbed = true;
     ReadJLineSensor();
     while (Junction_Left_Reading != true && Junction_Right_Reading != true)
@@ -411,7 +408,7 @@ void DropRoutine()
         Move_Straight();
     }
     Move_Stop();
-    Servo1.write(40); // open
+    Grabber_Servo.write(40); // open
     grabbed = false;
     Move_Backwards;
     delay(500);
@@ -493,7 +490,7 @@ void NormalRoutine()
 
 void TunnelRoutine()
 {
-    ReadSideIR();
+    ReadLeftIR();
     if (IR_Left_Reading < distance_to_wall)
     {
         Move_Left();
@@ -522,7 +519,7 @@ void loop()
     Serial.print("Right_MotorSpeed:");
     Serial.println(Right_Motor_Speed);
     CountJunctions(); // Count single intersections and double intersections
-    ReadSideIR();
+    ReadLeftIR();
     if (doubleintersection == 0)
     {
         // Initial Movement
@@ -541,7 +538,7 @@ void loop()
         JunctionRoutine();
         DropRoutine();
     }
-    if (not grabbed && JunctionDetected && intersection == 2)
+    if (!grabbed && JunctionDetected && intersection == 2)
     {
         ReadFrontIR();
         if (BlockDetected_Front)
@@ -552,12 +549,12 @@ void loop()
                 ReadFrontIR();
                 Move_Straight();
                 Move_Stop();
-                Servo1.write(85); // grab
+                Grabber_Servo.write(85); // grab
                 grabbed = true;
             }
         }
     }
-    if (not grabbed && BlockDetected_Left)
+    if (!grabbed && BlockDetected_Left)
     {
         if (intersection == 2)
         {
@@ -570,7 +567,7 @@ void loop()
                     ReadFrontIR();
                     Move_Straight();
                     Move_Stop();
-                    Servo1.write(85); // grab
+                    Grabber_Servo.write(85); // grab
                     grabbed = true;
                 }
             }
