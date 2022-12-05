@@ -14,6 +14,7 @@
 #define Line_Right_Sensor A2 // Line Tracking (Analog IN).
 #define IR_Left_Sensor A1 // Block detection perpendicular to robot path. (Analog IN).
 #define LDR_Tunnel_Sensor 0 // Detects whether robot has entered tunnel. (Digital IN).
+#define PushButton 1 
 #define LED_HighDensity 6 // RED LED. Activated when High Density Block is detected. (Digital OUT).
 #define LED_Moving 7 // Amber Flashing LED. HIGH when Robot is in motion. (Digital OUT).
 #define LDR_Grabber 8 // Distinguishes between HIGH and LOW density blocks. (Digital IN PULLUP).
@@ -34,6 +35,7 @@ float IR_Left_Reading; // Analog output from Left IR.
 const int Line_sensoroffset = 25; // Added to the right line sensor to account for sensor variance.
 const int IR_Front_Threshold = 10; // Distance below which the robot detects a block in front of it.
 const int IR_Left_Threshold = 5; // Distance below which the robot detects a block to the side.
+const int IR_Grab_Threshold = 5; // Distance at which to position the robot away from the block before grabbing.
 // note when calibrating Front Threshold: set to distance from junction 2 to middle block + some kind of additional distance for leeway
 
 // Motor Variables and Constants
@@ -224,19 +226,20 @@ void CountJunctions()
 }
 
 // ENCAPSULATE MOTOR IN CLASS TO REDUCE CODE
-
+#pragma region Move_Commands
+// Robot stops current movement.
 void Move_Stop()
 {
+    cycles_deviated = 0; // reset time away from line.
     Motor_Left->setSpeed(0);
     Motor_Right->setSpeed(0);
 }
-
 void Move_Straight()
 {
     Motor_Left->run(FORWARD);
     Motor_Right->run(FORWARD);
-        // Serial.print("STRAIGHT");
-        cycles_deviated = 0;
+    // Avoids sending excessive commands over I2C to the motor shield.
+    cycles_deviated = 0; // reset time away from line.
     if (Left_Motor_Speed != fast)
     {
         Motor_Left->setSpeed(fast);
@@ -253,8 +256,8 @@ void Move_Backwards()
 {
     Motor_Left->run(BACKWARD);
     Motor_Right->run(BACKWARD);
-    Serial.print("STRAIGHT");
-    cycles_deviated = 0;
+    cycles_deviated = 0; //reset time away from line.
+    // Avoids sending excessive commands over I2C to the motor shield.
     if (Left_Motor_Speed != fast)
     {
         Motor_Left->setSpeed(fast);
@@ -271,8 +274,8 @@ void Move_Left()
 {
     Motor_Left->run(FORWARD);
     Motor_Right->run(FORWARD);
-    Calc_Turning_Rate();
-    // Serial.print("LEFT");
+    Calc_Turning_Rate(); // Turn at a rate proportional to time since the robot was moving straight along the line.
+    // Avoids sending excessive commands over I2C to the motor shield.
     if (Left_Motor_Speed != slow)
     {
         Motor_Left->setSpeed(slow);
@@ -289,8 +292,8 @@ void Move_Right()
 {
     Motor_Left->run(FORWARD);
     Motor_Right->run(FORWARD);
-    Calc_Turning_Rate();
-    // Serial.print("RIGHT");
+    Calc_Turning_Rate(); // Turn at a rate proportional to time since the robot was moving straight along the line.
+    // Avoids sending excessive commands over I2C to the motor shield.
     if (Left_Motor_Speed != fast)
     {
         Motor_Left->setSpeed(fast);
@@ -303,8 +306,47 @@ void Move_Right()
     }
 }
 
+void Move_ACW()
+{
+    Motor_Left->run(BACKWARD);
+    Motor_Right->run(FORWARD);
+    // Avoids sending excessive commands over I2C to the motor shield.
+    if (Left_Motor_Speed != fast)
+    {
+        Motor_Left->setSpeed(fast);
+        Left_Motor_Speed = fast;
+    }
+    if (Right_Motor_Speed != fast)
+    {
+        Motor_Right->setSpeed(fast);
+        Right_Motor_Speed = fast;
+    }
+}
+
+// The robot will start moving clockwise at full speed.
+void Move_CW()
+{
+    Motor_Left->run(FORWARD);
+    Motor_Right->run(BACKWARD);
+    // Avoids sending excessive commands over I2C to the motor shield.
+    if (Left_Motor_Speed != fast)
+    {
+        Motor_Left->setSpeed(fast);
+        Left_Motor_Speed = fast;
+    }
+    if (Right_Motor_Speed != fast)
+    {
+        Motor_Right->setSpeed(fast);
+        Right_Motor_Speed = fast;
+    }
+}
+
+/// Calculates turning rate proportional to time spent away from line (capped at a limit set by cycles_max and max_speed_delta)
 void Calc_Turning_Rate()
 {
+    // nb this script uses processor cycles, so will be dependent on code complexity rather than absolute time.
+    // this does however greatly simplify this calculation, and so was deemed a reasonable compromise as processor load
+    // will be approximately the same in any situation where this function is called.
     cycles_deviated += 1;
     // slow = 150;
     slow = fast - (max_speed_delta * cycles_deviated / cycles_max);
@@ -330,39 +372,9 @@ void Move_Lost()
     
     
 }
+#pragma endregion
 
-void Move_ACW()
-{
-    Motor_Left->run(BACKWARD);
-    Motor_Right->run(FORWARD);
-    if (Left_Motor_Speed != fast)
-    {
-        Motor_Left->setSpeed(fast);
-        Left_Motor_Speed = fast;
-    }
-    if (Right_Motor_Speed != fast)
-    {
-        Motor_Right->setSpeed(fast);
-        Right_Motor_Speed = fast;
-    }
-}
-
-void Move_CW()
-{
-    Motor_Left->run(FORWARD);
-    Motor_Right->run(BACKWARD);
-    if (Left_Motor_Speed != fast)
-    {
-        Motor_Left->setSpeed(fast);
-        Left_Motor_Speed = fast;
-    }
-    if (Right_Motor_Speed != fast)
-    {
-        Motor_Right->setSpeed(fast);
-        Right_Motor_Speed = fast;
-    }
-}
-
+// Reads the Grabber LDR and determines whether the block is of HIGH or LOW density, sets an appropraiate destination for block deposit.
 void DetectDensityRoutine()
 {
     bool block_type = digitalRead(LDR_Grabber);
@@ -378,18 +390,22 @@ void DetectDensityRoutine()
     }
 }
 
+/// Grab the block currently in front of the robot and return to position at end of function call.
 void GrabRoutine(){
-    // To change: Move forwards until front IR sensor reads near 0, Move backwards until J line sensors read junction
+    // Moves forward until the block is immediately in front of the robot.
     ReadFrontIR();
-    while (IR_Front_Reading > 2)
+    while (IR_Front_Reading > IR_Grab_Threshold)
     {
         ReadFrontIR();
         Move_Straight();
     }
+    delay(100);
+    // Stop in front of the block and close the grabber.
     Move_Stop();
-    Grabber_Servo.write(85); // close
+    Grabber_Servo.write(85);
     grabbed = true;
     ReadJLineSensor();
+    // Reverse until the robot is back on the line.
     while (Junction_Left_Reading != true && Junction_Right_Reading != true)
     {
         ReadJLineSensor();
@@ -398,20 +414,26 @@ void GrabRoutine(){
     Move_Stop();
 }
 
+/// Drops the block in the box and returns to position at end of function call.
 void DropRoutine()
 {
+    // Move a short distance off of the main line going around the table.
     Move_Straight();
-    delay(500);
+    delay(100);
+    // Move until the edge of the box is reached.
     while (Junction_Left_Reading != true && Junction_Right_Reading != true)
     {
         ReadJLineSensor();
         Move_Straight();
     }
     Move_Stop();
+    // Drop the block here.
     Grabber_Servo.write(40); // open
     grabbed = false;
+    // Reverse a short distance so that the junction sensors aren't on the box.
     Move_Backwards;
     delay(500);
+    // Continue to reverse until the robot is back on the line.
     while (Junction_Left_Reading != true && Junction_Right_Reading != true)
     {
         ReadJLineSensor();
@@ -466,6 +488,7 @@ void JunctionRoutine()
     Move_Stop();
 }
 
+/// This routine keeps the robot tracking the line on the table surface.
 void NormalRoutine()
 {
     ReadJLineSensor();
@@ -485,17 +508,17 @@ void NormalRoutine()
     {
         //Move_Lost();
     }
-    // TODO test if setting motor speed here or in the function is faster? Use of two variable versus one
 }
 
+/// When robot is in tunnel, this subroutine maintains the robots distance to the wall of the tunnel, keeping it moving in a straight line.
 void TunnelRoutine()
 {
     ReadLeftIR();
-    if (IR_Left_Reading < distance_to_wall)
+    if (IR_Left_Reading > distance_to_wall)
     {
         Move_Left();
     }
-    else if (IR_Left_Reading > distance_to_wall)
+    else if (IR_Left_Reading < distance_to_wall)
     {
         Move_Right();
     }
@@ -584,8 +607,3 @@ void loop()
     }
     NormalRoutine();
 }
-// Things to do
-// Fix Global variable declarations, all messed up right now
-// Set up all sensors in setup function
-// Add the Open and close function for the grabbers and then add that function to the Routines
-// Add a LED, LED must be flashing 2Hz when moving
