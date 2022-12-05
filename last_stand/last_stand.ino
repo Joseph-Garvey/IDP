@@ -67,6 +67,7 @@ void setup()
 {
     Serial.begin(9600);
     // Set forward motor direction.v
+    pinMode(1, OUTPUT);
     while (!AFMS.begin())
     {
         Serial.println("Could not find Motor Shield. Check wiring.");
@@ -166,22 +167,32 @@ void loop()
     //loopon = digitalRead(Flip_Flop_Circuit);
     //if (loopon)
     //{
+      digitalWrite(1, LOW);
       delay(5000);
-      Move_Straight();
-      delay(1000);
+      digitalwrite(1, HIGH);
       Move_Stop();
+      digitalwrite(1, LOW);
       delay(100);
       Move_ACW();
-      delay(2000);
+      delay(4000);
       Move_Stop();
       Move_Straight();
+      digitalwrite(1, HIGH);
       delay(9000);
       Move_CW();
-      delay(1200);
+      delay(1700);
       Move_Straight();
-      delay(9000);
+      delay(10000);
       Move_Stop();
-      while(true){}
-      delay(rotatingtime1);
+      Move_CW();
+      delay(700);
+      Move_Straight();
+      delay(10000);
+      Move_Stop();
+      Move_ACW();
+      delay(2000);
+      Move_Straight();
+      delay(20000);
+      digitalwrite(1, low;
     //}
 }
